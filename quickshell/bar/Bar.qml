@@ -668,10 +668,23 @@ Variants {
                 anchors.centerIn: parent
                 anchors.verticalCenterOffset: -5
                 anchors.horizontalCenterOffset: -8
-                text: "󰣇"
+                visible: startMenu.startIconPath === ""
+                text: startMenu.defaultStartIcon
                 font.pixelSize: 18
                 color: startBtnArea.containsMouse ? "#ffffff" : "#39c5bb"
                 Behavior on color { ColorAnimation { duration: 130 } }
+            }
+
+            Image {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: 0
+                anchors.horizontalCenterOffset: -8
+                width: 48; height: 48
+                visible: startMenu.startIconPath !== ""
+                source: startMenu.startIconPath !== "" ? "file://" + startMenu.startIconPath : ""
+                fillMode: Image.PreserveAspectFit
+                asynchronous: true
+                smooth: true
             }
 
             MouseArea {

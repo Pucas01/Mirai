@@ -7,6 +7,8 @@ Window {
     property bool isOpen: false
     property string username: ""
     property string searchText: ""
+    property alias startIconPath: settingsWin.startIconPath
+    readonly property string defaultStartIcon: settingsWin.defaultStartIcon
     property var allApps: {
         try {
             return DesktopEntries.applications.values
@@ -93,8 +95,48 @@ Window {
                     anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
                     width: 38; height: 38; radius: 19
                     color: "#39c5bb"
+
+                    Image {
+                        id: avatarImage
+                        visible: false
+                        source: settingsWin.pfpPath !== "" ? "file://" + settingsWin.pfpPath : ""
+                        asynchronous: true
+                        onStatusChanged: if (status === Image.Ready) avatarCanvas.requestPaint()
+                    }
+
+                    Canvas {
+                        id: avatarCanvas
+                        anchors.fill: parent
+                        visible: settingsWin.pfpPath !== ""
+                        onWidthChanged: requestPaint()
+                        onHeightChanged: requestPaint()
+                        onPaint: {
+                            var ctx = getContext("2d")
+                            ctx.clearRect(0, 0, width, height)
+                            if (avatarImage.status !== Image.Ready) return
+                            var iw = avatarImage.sourceSize.width, ih = avatarImage.sourceSize.height
+                            if (iw <= 0 || ih <= 0) return
+                            var targetAspect = width / height
+                            var srcAspect = iw / ih
+                            var sx, sy, sw, sh
+                            if (srcAspect > targetAspect) {
+                                sh = ih; sw = ih * targetAspect; sx = (iw - sw) / 2; sy = 0
+                            } else {
+                                sw = iw; sh = iw / targetAspect; sx = 0; sy = (ih - sh) / 2
+                            }
+                            ctx.save()
+                            ctx.beginPath()
+                            ctx.arc(width / 2, height / 2, Math.min(width, height) / 2, 0, Math.PI * 2)
+                            ctx.closePath()
+                            ctx.clip()
+                            ctx.drawImage(avatarImage, sx, sy, sw, sh, 0, 0, width, height)
+                            ctx.restore()
+                        }
+                    }
+
                     Text {
                         anchors.centerIn: parent
+                        visible: settingsWin.pfpPath === ""
                         text: startMenuWin.username.length > 0 ? startMenuWin.username[0].toUpperCase() : "?"
                         color: "#1a1a1a"
                         font.pixelSize: 18; font.bold: true; font.family: "monospace"
