@@ -14,8 +14,9 @@ Variants {
         property var hyprMonitor: Hyprland.monitorFor(modelData)
         property var screenWorkspaces: Hyprland.workspaces.values.filter(w => w.monitor === hyprMonitor)
 
+
         anchors { top: true; left: true; right: true }
-        implicitHeight: 40
+        implicitHeight: 42
         color: "transparent"
         exclusiveZone: implicitHeight
 
@@ -53,9 +54,28 @@ Variants {
                 color: "#39c5bb"
             }
 
-            Row {
+            Item {
+                id: wsArea
                 anchors.centerIn: parent
-                spacing: 5
+                width: wsRow.width + 24
+                height: parent.height
+
+                MouseArea {
+                    anchors.fill: parent
+                    onWheel: wheel => {
+                        const ws = panel.screenWorkspaces
+                        const activeIdx = ws.findIndex(w => w.active)
+                        if (activeIdx === -1) return
+                        const dir = wheel.angleDelta.y > 0 ? 1 : -1
+                        const nextId = ws[(activeIdx + dir + ws.length) % ws.length].id
+                        Hyprland.dispatch("hl.dsp.focus({workspace=\"" + nextId + "\"})")
+                    }
+                }
+
+                Row {
+                    id: wsRow
+                    anchors.centerIn: parent
+                    spacing: 5
 
                 Repeater {
                     model: panel.screenWorkspaces
@@ -171,8 +191,10 @@ Variants {
                         MouseArea {
                             anchors.fill: parent
                             onClicked: Hyprland.dispatch("hl.dsp.focus({workspace=\"" + modelData.id + "\"})")
+                            onWheel: wheel => { wheel.accepted = false }
                         }
                     }
+                }
                 }
             }
         }
