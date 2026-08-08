@@ -114,6 +114,7 @@ Window {
                     MouseArea {
                         id: clearAllArea
                         anchors.fill: parent; hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
                         onContainsMouseChanged: clearAllCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
                         onClicked: {
                             var notifs = notifPopup.trackedNotifications.values
@@ -264,6 +265,7 @@ Window {
                             MouseArea {
                                 id: dismissArea
                                 anchors.fill: parent; hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
                                 onClicked: modelData.dismiss()
                             }
                         }

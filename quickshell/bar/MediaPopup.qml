@@ -226,6 +226,7 @@ Window {
                             id: btnArea
                             anchors.fill: parent
                             hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
                             onContainsMouseChanged: btnCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
                             onClicked: parent.activated()
                         }
@@ -313,6 +314,7 @@ Window {
                     MouseArea {
                         id: playerCycleArea
                         anchors.fill: parent; hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
                         onContainsMouseChanged: playerCycleCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
                         onClicked: {
                             var players = Mpris.players.values

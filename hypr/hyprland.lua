@@ -378,5 +378,5 @@ hl.window_rule({
     float = true,
 })
 
--- hyprmon: managed monitor profile include
-require("hyprmon")
+-- monitors: managed by qs-settings (bar settings > monitors page)
+require("monitors")

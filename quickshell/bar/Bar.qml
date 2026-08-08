@@ -213,6 +213,7 @@ Variants {
                     MouseArea {
                         id: bellMouseArea
                         anchors.fill: parent; hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
                         onContainsMouseChanged: bellCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
                         onClicked: {
                             var center = mapToGlobal(width / 2, 0)
@@ -354,6 +355,7 @@ Variants {
 
                     MouseArea {
                         anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             var center = mapToGlobal(width / 2, 0)
                             var barBottom = barBg.mapToGlobal(0, barBg.height)
@@ -592,6 +594,7 @@ Variants {
                         MouseArea {
                             anchors.fill: parent
                             hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
                             onContainsMouseChanged: pill.hoverProgress = containsMouse ? 1.0 : 0.0
                             onClicked: Hyprland.dispatch("hl.dsp.focus({workspace=\"" + modelData.id + "\"})")
                             onWheel: wheel => { wheel.accepted = false }
@@ -675,6 +678,7 @@ Variants {
                 id: startBtnArea
                 anchors { left: parent.left; top: parent.top; right: parent.right; bottom: parent.bottom; bottomMargin: 10 }
                 hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
                 onContainsMouseChanged: startBtnCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
                 onClicked: {
                     var pos = barBg.mapToGlobal(0, barBg.height)
