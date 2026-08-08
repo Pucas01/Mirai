@@ -204,6 +204,12 @@ Window {
     }
 
     Process {
+        id: openRepoProc
+        command: ["xdg-open", "https://github.com/Pucas01/Mirai"]
+        running: false
+    }
+
+    Process {
         id: monitorsProc
         command: ["hyprctl", "monitors", "-j"]
         running: false
@@ -272,7 +278,7 @@ Window {
                 anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
                 text: "settings"
                 color: "#39c5bb"
-                font.pixelSize: 11; font.family: "monospace"
+                font.pixelSize: 11; font.family: "Orbitron"
             }
 
             Item {
@@ -455,6 +461,18 @@ Window {
                     NavItem { sym: "󰍹"; label: "monitors"; target: "monitors" }
                     NavItem { sym: "󰕾"; label: "audio"; target: "audio" }
                     NavItem { sym: "󰂯"; label: "bluetooth"; target: "bluetooth" }
+                }
+
+                Rectangle {
+                    anchors { bottom: parent.bottom; left: parent.left; right: parent.right; bottomMargin: 54 }
+                    height: 1; color: "#2a2a2a"
+                }
+
+                NavItem {
+                    anchors { bottom: parent.bottom; bottomMargin: 8 }
+                    sym: "󰋽"
+                    label: "about"
+                    target: "about"
                 }
             }
 
@@ -2092,6 +2110,83 @@ Window {
                         text: "bluetooth is off"
                         color: "#444444"
                         font.pixelSize: 12; font.family: "monospace"
+                    }
+                }
+
+                Item {
+                    id: aboutSection
+                    anchors.fill: parent
+                    opacity: settingsWin.section === "about" ? 1.0 : 0.0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+
+                    property real slideY: settingsWin.section === "about" ? 0 : 10
+                    Behavior on slideY { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                    transform: Translate { y: aboutSection.slideY }
+
+                    Item {
+                        id: aboutHeader
+                        anchors { top: parent.top; left: parent.left; right: parent.right }
+                        height: 44
+
+                        Text {
+                            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
+                            text: "about"
+                            color: "#ffffff"
+                            font.pixelSize: 13; font.family: "monospace"
+                        }
+
+                        Rectangle {
+                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+                            height: 1; color: "#2a2a2a"
+                        }
+                    }
+
+                    Column {
+                        anchors.centerIn: parent
+                        anchors.verticalCenterOffset: -16
+                        spacing: 8
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "Mirai"
+                            color: "#39c5bb"
+                            font.pixelSize: 34; font.bold: true; font.family: "monospace"
+                        }
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "My personal quickshell, i like it very much"
+                            color: "#999999"
+                            font.pixelSize: 11; font.family: "monospace"
+                        }
+
+                        Item { width: 1; height: 10 }
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "built by Pucas01"
+                            color: "#666666"
+                            font.pixelSize: 10; font.family: "monospace"
+                        }
+
+                        Text {
+                            id: repoLinkText
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "github.com/Pucas01/Mirai"
+                            color: repoLinkArea.containsMouse ? "#80e0e0" : "#39c5bb"
+                            font.pixelSize: 10; font.family: "monospace"
+                            font.underline: repoLinkArea.containsMouse
+                            Behavior on color { ColorAnimation { duration: 100 } }
+
+                            MouseArea {
+                                id: repoLinkArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: { openRepoProc.running = false; openRepoProc.running = true }
+                            }
+                        }
                     }
                 }
             }
