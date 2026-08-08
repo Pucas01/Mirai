@@ -5,6 +5,7 @@ import Quickshell.Hyprland
 import Quickshell.Services.SystemTray
 import Quickshell.Services.Mpris
 import Quickshell.Services.Notifications
+import Quickshell.Services.Pipewire
 import Quickshell.Io
 
 Variants {
@@ -73,6 +74,24 @@ Variants {
             }
         }
 
+        property bool audioOsdArmed: false
+        Timer { interval: 1500; running: true; onTriggered: panel.audioOsdArmed = true }
+
+        function showAudioOsd() {
+            if (!panel.audioOsdArmed) return
+            if (!panel.hyprMonitor || !panel.hyprMonitor.focused) return
+            if (audioPopup.sliderActive || startMenu.audioSliderActive) return
+            var wsCenter = wsArea.mapToGlobal(wsArea.width / 2, 0)
+            var barBottom = barBg.mapToGlobal(0, barBg.height)
+            audioOsd.show(wsCenter.x - audioOsd.width / 2, barBottom.y + 8)
+        }
+
+        Connections {
+            target: Pipewire.defaultAudioSink ? Pipewire.defaultAudioSink.audio : null
+            function onVolumeChanged() { panel.showAudioOsd() }
+            function onMutedChanged() { panel.showAudioOsd() }
+        }
+
         anchors { top: true; left: true; right: true }
         implicitHeight: 50
         color: "transparent"
@@ -106,6 +125,14 @@ Variants {
             trackedNotifications: notifServer.trackedNotifications
             notifCount: shellRoot.globalNotifCount
             onNotifCountReset: shellRoot.globalNotifCount = 0
+        }
+
+        AudioPopup {
+            id: audioPopup
+        }
+
+        AudioOSD {
+            id: audioOsd
         }
 
         Rectangle {
@@ -147,6 +174,84 @@ Variants {
             Row {
                 anchors { right: parent.right; top: parent.top; bottom: parent.bottom; rightMargin: 14 }
                 spacing: 10
+
+                Item {
+                    id: audioItem
+                    width: 35; height: 30
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    PwObjectTracker {
+                        objects: Pipewire.defaultAudioSink ? [Pipewire.defaultAudioSink] : []
+                    }
+
+                    Canvas {
+                        id: audioCanvas
+                        anchors.fill: parent
+                        property real hoverProgress: 0.0
+                        Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                        onHoverProgressChanged: requestPaint()
+                        onWidthChanged: requestPaint()
+                        onHeightChanged: requestPaint()
+                        onPaint: {
+                            var ctx = getContext("2d")
+                            ctx.clearRect(0, 0, width, height)
+                            var cut = 5, w = width, h = height, hp = hoverProgress
+                            function drawShape() {
+                                ctx.beginPath()
+                                ctx.moveTo(cut, 0); ctx.lineTo(w, 0)
+                                ctx.lineTo(w, h - cut); ctx.lineTo(w - cut, h)
+                                ctx.lineTo(0, h); ctx.lineTo(0, cut); ctx.closePath()
+                            }
+                            drawShape()
+                            var base = ctx.createLinearGradient(0, 0, 0, h)
+                            base.addColorStop(0, "#3d3d3d"); base.addColorStop(0.08, "#2a2a2a")
+                            base.addColorStop(0.5, "#303030"); base.addColorStop(1.0, "#3a3a3a")
+                            ctx.fillStyle = base; ctx.fill()
+                            if (hp > 0) {
+                                drawShape()
+                                var teal = ctx.createLinearGradient(0, 0, 0, h)
+                                teal.addColorStop(0, "#80e0e0"); teal.addColorStop(0.08, "#39c5bb")
+                                teal.addColorStop(0.5, "#2a8a8a"); teal.addColorStop(1.0, "#3a6a6a")
+                                ctx.globalAlpha = hp; ctx.fillStyle = teal; ctx.fill(); ctx.globalAlpha = 1.0
+                            }
+                            ctx.beginPath()
+                            ctx.moveTo(cut, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h * 0.62)
+                            ctx.lineTo(0, h * 0.62); ctx.lineTo(0, cut); ctx.closePath()
+                            var gloss = ctx.createLinearGradient(0, 0, 0, h * 0.62)
+                            gloss.addColorStop(0, "rgba(255,255,255," + (0.12 + hp * 0.2) + ")")
+                            gloss.addColorStop(1, "rgba(255,255,255,0.00)")
+                            ctx.fillStyle = gloss; ctx.fill()
+                            ctx.beginPath(); ctx.moveTo(cut, 0.5); ctx.lineTo(w, 0.5)
+                            ctx.strokeStyle = hp > 0.5 ? "#c0f4f4" : "#646464"; ctx.lineWidth = 1; ctx.stroke()
+                        }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: (Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio && Pipewire.defaultAudioSink.audio.muted) ? "󰝟" : "󰕾"
+                        font.pixelSize: 14
+                        color: audioMouseArea.containsMouse ? "#ffffff" : "#888888"
+                        Behavior on color { ColorAnimation { duration: 130 } }
+                    }
+
+                    MouseArea {
+                        id: audioMouseArea
+                        anchors.fill: parent; hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onContainsMouseChanged: audioCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                        onClicked: {
+                            var center = mapToGlobal(width / 2, 0)
+                            var barBottom = barBg.mapToGlobal(0, barBg.height)
+                            audioPopup.open(center.x - audioPopup.width / 2, barBottom.y + 6)
+                        }
+                        onWheel: wheel => {
+                            if (!Pipewire.defaultAudioSink || !Pipewire.defaultAudioSink.audio) return
+                            var step = wheel.angleDelta.y > 0 ? 0.05 : -0.05
+                            var audio = Pipewire.defaultAudioSink.audio
+                            audio.volume = Math.max(0, Math.min(1, audio.volume + step))
+                        }
+                    }
+                }
 
                 Item {
                     id: bellItem

@@ -9,6 +9,7 @@ Window {
     property string searchText: ""
     property alias startIconPath: settingsWin.startIconPath
     readonly property string defaultStartIcon: settingsWin.defaultStartIcon
+    property alias audioSliderActive: settingsWin.audioSliderActive
     property var allApps: {
         try {
             return DesktopEntries.applications.values

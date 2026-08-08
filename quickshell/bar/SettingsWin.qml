@@ -13,6 +13,8 @@ Window {
     height: 500
     visible: false
 
+    property alias audioSliderActive: audioSection.sliderActive
+
     property string section: "wallpaper"
     property string wallpaperDir: "/home/pucas02/Pictures/Wallpapers"
     property string appliedWallpaper: ""
@@ -1471,6 +1473,13 @@ Window {
                     Behavior on slideY { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                     transform: Translate { y: audioSection.slideY }
 
+                    property bool sliderActive: false
+                    function markSliderActive() {
+                        sliderActive = true
+                        sliderActiveResetTimer.restart()
+                    }
+                    Timer { id: sliderActiveResetTimer; interval: 300; onTriggered: audioSection.sliderActive = false }
+
                     PwObjectTracker {
                         objects: Pipewire.nodes.values
                     }
@@ -1510,9 +1519,17 @@ Window {
                         MouseArea {
                             anchors { fill: parent; margins: -4 }
                             cursorShape: Qt.PointingHandCursor
-                            function updateFromX(mx) { moved(Math.max(0, Math.min(1, mx / width))) }
+                            function updateFromX(mx) {
+                                audioSection.markSliderActive()
+                                moved(Math.max(0, Math.min(1, mx / width)))
+                            }
                             onPressed: mouse => updateFromX(mouse.x)
                             onPositionChanged: mouse => { if (pressed) updateFromX(mouse.x) }
+                            onWheel: wheel => {
+                                var step = wheel.angleDelta.y > 0 ? 0.05 : -0.05
+                                audioSection.markSliderActive()
+                                moved(Math.max(0, Math.min(1, value + step)))
+                            }
                         }
                     }
 
