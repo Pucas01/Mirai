@@ -1,0 +1,197 @@
+import QtQuick
+import Quickshell
+import Quickshell.Widgets
+
+Window {
+    id: toastWin
+    property bool isOpen: false
+    property var currentNotif: null
+    property var pendingNotif: null
+    flags: Qt.ToolTip | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint
+    color: "transparent"
+    width: 320
+    height: 78
+    visible: false
+
+    onPendingNotifChanged: {
+        if (!pendingNotif) return
+        currentNotif = pendingNotif
+        toastSwipeItem.swipeX = 0
+    }
+
+    function show(x, y, notif) {
+        pendingNotif = notif
+        toastWin.x = x
+        toastWin.y = y
+        isOpen = false
+        visible = true
+        toastOpenTimer.start()
+        toastAutoClose.restart()
+    }
+
+    Timer { id: toastOpenTimer; interval: 10; onTriggered: toastWin.isOpen = true }
+    Timer { id: toastAutoClose; interval: 4000; onTriggered: { toastWin.isOpen = false; toastHideTimer.start() } }
+    Timer { id: toastHideTimer; interval: 220; onTriggered: toastWin.visible = false }
+
+    Item {
+        id: toastAnimItem
+        anchors.fill: parent
+
+        opacity: toastWin.isOpen ? 1.0 : 0.0
+        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+        property real scaleVal: toastWin.isOpen ? 1.0 : 0.88
+        Behavior on scaleVal { NumberAnimation { duration: 200; easing.type: Easing.OutBack; easing.overshoot: 0.35 } }
+
+        property real slideY: toastWin.isOpen ? 0 : -10
+        Behavior on slideY { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+        transform: [
+            Scale { origin.x: toastAnimItem.width / 2; origin.y: 0; xScale: toastAnimItem.scaleVal; yScale: toastAnimItem.scaleVal },
+            Translate { y: toastAnimItem.slideY }
+        ]
+
+        Item {
+            id: toastSwipeItem
+            width: parent.width
+            height: parent.height
+            x: swipeX
+            opacity: Math.max(0, 1.0 - swipeX / 150)
+
+            property real swipeX: 0
+
+            Canvas {
+                id: toastCanvas
+                anchors.fill: parent
+                onPaint: {
+                    var ctx = getContext("2d")
+                    ctx.clearRect(0, 0, width, height)
+                    var cut = 8, w = width, h = height
+
+                    function drawShape() {
+                        ctx.beginPath()
+                        ctx.moveTo(cut, 0)
+                        ctx.lineTo(w,       0)
+                        ctx.lineTo(w,       h - cut)
+                        ctx.lineTo(w - cut, h)
+                        ctx.lineTo(0,       h)
+                        ctx.lineTo(0,       cut)
+                        ctx.closePath()
+                    }
+
+                    drawShape()
+                    var base = ctx.createLinearGradient(0, 0, 0, h)
+                    base.addColorStop(0,    "#3d3d3d")
+                    base.addColorStop(0.08, "#2a2a2a")
+                    base.addColorStop(0.5,  "#303030")
+                    base.addColorStop(1.0,  "#3a3a3a")
+                    ctx.fillStyle = base
+                    ctx.fill()
+
+                    ctx.beginPath()
+                    ctx.moveTo(cut, 0)
+                    ctx.lineTo(w,   0)
+                    ctx.lineTo(w,   h * 0.55)
+                    ctx.lineTo(0,   h * 0.55)
+                    ctx.lineTo(0,   cut)
+                    ctx.closePath()
+                    var gloss = ctx.createLinearGradient(0, 0, 0, h * 0.55)
+                    gloss.addColorStop(0, "rgba(255,255,255,0.18)")
+                    gloss.addColorStop(1, "rgba(255,255,255,0.00)")
+                    ctx.fillStyle = gloss
+                    ctx.fill()
+
+                    ctx.beginPath()
+                    ctx.moveTo(cut, 0.5)
+                    ctx.lineTo(w,   0.5)
+                    ctx.strokeStyle = "#646464"
+                    ctx.lineWidth = 1
+                    ctx.stroke()
+                }
+            }
+
+            Row {
+                anchors { left: parent.left; right: toastCloseItem.left; top: parent.top; bottom: parent.bottom; margins: 12; rightMargin: 4 }
+                spacing: 10
+
+                IconImage {
+                    width: 24; height: 24
+                    anchors.verticalCenter: parent.verticalCenter
+                    source: toastWin.currentNotif && toastWin.currentNotif.appIcon !== "" ? "image://icon/" + toastWin.currentNotif.appIcon : ""
+                    mipmap: true
+                    visible: toastWin.currentNotif && toastWin.currentNotif.appIcon !== ""
+                }
+
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - (toastWin.currentNotif && toastWin.currentNotif.appIcon !== "" ? 34 : 0)
+                    spacing: 4
+
+                    Text {
+                        width: parent.width
+                        text: toastWin.currentNotif ? toastWin.currentNotif.summary : ""
+                        color: "#e0e0e0"
+                        font.pixelSize: 13; font.family: "monospace"
+                        elide: Text.ElideRight
+                    }
+
+                    Text {
+                        width: parent.width
+                        text: toastWin.currentNotif ? toastWin.currentNotif.body : ""
+                        color: "#777777"
+                        font.pixelSize: 11; font.family: "monospace"
+                        elide: Text.ElideRight
+                        visible: toastWin.currentNotif && toastWin.currentNotif.body !== ""
+                    }
+                }
+            }
+
+            Item {
+                id: toastCloseItem
+                anchors { right: parent.right; top: parent.top; rightMargin: 8; topMargin: 8 }
+                width: 16; height: 16
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "×"
+                    color: toastCloseArea.containsMouse ? "#ffffff" : "#555555"
+                    font.pixelSize: 14
+                    Behavior on color { ColorAnimation { duration: 100 } }
+                }
+
+                MouseArea {
+                    id: toastCloseArea
+                    anchors.fill: parent; hoverEnabled: true
+                    onClicked: { toastWin.isOpen = false; toastHideTimer.start() }
+                }
+            }
+        }
+
+        DragHandler {
+            id: toastSwipe
+            xAxis.enabled: true
+            yAxis.enabled: false
+            onTranslationChanged: if (active) toastSwipeItem.swipeX = Math.max(0, translation.x)
+            onActiveChanged: {
+                if (!active) {
+                    if (toastSwipeItem.swipeX > 80) {
+                        if (toastWin.currentNotif) toastWin.currentNotif.dismiss()
+                        toastWin.isOpen = false
+                        toastHideTimer.start()
+                    } else {
+                        toastSnapBackAnim.start()
+                    }
+                }
+            }
+        }
+
+        NumberAnimation {
+            id: toastSnapBackAnim
+            target: toastSwipeItem
+            property: "swipeX"
+            to: 0
+            duration: 220
+            easing.type: Easing.OutCubic
+        }
+    }
+}
