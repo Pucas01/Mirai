@@ -109,12 +109,12 @@ hl.env("HYPRCURSOR_SIZE", "24")
 hl.config({
     general = {
         gaps_in  = 5,
-        gaps_out = 20,
+        gaps_out = 10,
 
         border_size = 2,
 
         col = {
-            active_border   = { colors = {"rgba(33ccffee)", "rgba(00ff99ee)"}, angle = 45 },
+            active_border   = "rgba(39c5bbee)",
             inactive_border = "rgba(595959aa)",
         },
 
@@ -128,8 +128,7 @@ hl.config({
     },
 
     decoration = {
-        rounding       = 10,
-        rounding_power = 2,
+        rounding       = 0,
 
         -- Change transparency of focused and unfocused windows
         active_opacity   = 1.0,
