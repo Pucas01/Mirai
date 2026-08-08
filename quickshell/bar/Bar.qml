@@ -20,7 +20,12 @@ Variants {
 
         property var hyprMonitor: Hyprland.monitorFor(modelData)
         property var screenWorkspaces: Hyprland.workspaces.values.filter(w => w.monitor === hyprMonitor)
-        property var activePlayer: Mpris.players.values.find(p => p.isPlaying) ?? (Mpris.players.values.length > 0 ? Mpris.players.values[0] : null)
+        property var preferredPlayer: null
+        property var activePlayer: {
+            var players = Mpris.players.values
+            if (preferredPlayer && players.indexOf(preferredPlayer) !== -1) return preferredPlayer
+            return players.find(p => p.isPlaying) ?? (players.length > 0 ? players[0] : null)
+        }
 
         NotificationServer {
             id: notifServer
@@ -251,10 +256,11 @@ Variants {
         Window {
             id: mediaPopup
             property bool isOpen: false
+            property var displayPlayer: panel.activePlayer
             flags: Qt.Popup | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint
             color: "transparent"
             width: 260
-            height: 370
+            height: 400
             visible: false
 
             function closePopup() {
@@ -267,6 +273,21 @@ Variants {
                     close.accepted = false
                     closePopup()
                 }
+            }
+
+            Connections {
+                target: panel
+                function onActivePlayerChanged() {
+                    if (panel.activePlayer === mediaPopup.displayPlayer) return
+                    playerFadeOut.start()
+                }
+            }
+
+            SequentialAnimation {
+                id: playerFadeOut
+                NumberAnimation { target: mediaContent; property: "opacity"; to: 0; duration: 130; easing.type: Easing.OutCubic }
+                ScriptAction { script: { mediaPopup.displayPlayer = panel.activePlayer } }
+                NumberAnimation { target: mediaContent; property: "opacity"; to: 1; duration: 180; easing.type: Easing.OutCubic }
             }
 
             Timer { id: mediaOpenTimer; interval: 10; onTriggered: mediaPopup.isOpen = true }
@@ -294,6 +315,7 @@ Variants {
                 ]
 
                 Column {
+                    id: mediaContent
                     anchors.fill: parent
                     anchors.margins: 1
                     spacing: 0
@@ -305,13 +327,13 @@ Variants {
 
                         Image {
                             anchors.fill: parent
-                            source: panel.activePlayer ? panel.activePlayer.trackArtUrl : ""
+                            source: mediaPopup.displayPlayer ? mediaPopup.displayPlayer.trackArtUrl : ""
                             fillMode: Image.PreserveAspectCrop
-                            visible: panel.activePlayer && panel.activePlayer.trackArtUrl !== ""
+                            visible: mediaPopup.displayPlayer && mediaPopup.displayPlayer.trackArtUrl !== ""
                         }
 
                         Rectangle {
-                            visible: !panel.activePlayer || panel.activePlayer.trackArtUrl === ""
+                            visible: !mediaPopup.displayPlayer || mediaPopup.displayPlayer.trackArtUrl === ""
                             anchors.fill: parent
                             color: "#111111"
                             Text {
@@ -346,7 +368,7 @@ Variants {
 
                             Text {
                                 width: parent.width
-                                text: panel.activePlayer ? panel.activePlayer.trackTitle : ""
+                                text: mediaPopup.displayPlayer ? mediaPopup.displayPlayer.trackTitle : ""
                                 color: "#e0e0e0"
                                 font.pixelSize: 14
                                 font.family: "monospace"
@@ -355,7 +377,7 @@ Variants {
 
                             Text {
                                 width: parent.width
-                                text: panel.activePlayer ? panel.activePlayer.trackArtist : ""
+                                text: mediaPopup.displayPlayer ? mediaPopup.displayPlayer.trackArtist : ""
                                 color: "#777777"
                                 font.pixelSize: 12
                                 font.family: "monospace"
@@ -364,7 +386,7 @@ Variants {
                         }
 
                         Row {
-                            anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 16 }
+                            anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: Mpris.players.values.length > 1 ? 46 : 16 }
                             spacing: 12
 
                             component MediaBtn: Item {
@@ -464,6 +486,84 @@ Variants {
                             MediaBtn {
                                 sym: "⏭"
                                 onActivated: if (panel.activePlayer) panel.activePlayer.next()
+                            }
+                        }
+
+                        Item {
+                            visible: Mpris.players.values.length > 1
+                            anchors { left: parent.left; right: parent.right; bottom: parent.bottom; bottomMargin: 10; leftMargin: 14; rightMargin: 14 }
+                            height: 28
+
+                            Canvas {
+                                id: playerCycleCanvas
+                                anchors.fill: parent
+                                property real hoverProgress: 0.0
+                                Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                onHoverProgressChanged: requestPaint()
+                                onWidthChanged: requestPaint()
+                                onHeightChanged: requestPaint()
+                                onPaint: {
+                                    var ctx = getContext("2d")
+                                    ctx.clearRect(0, 0, width, height)
+                                    var cut = 5, w = width, h = height, hp = hoverProgress
+                                    function drawShape() {
+                                        ctx.beginPath()
+                                        ctx.moveTo(cut, 0); ctx.lineTo(w, 0)
+                                        ctx.lineTo(w, h - cut); ctx.lineTo(w - cut, h)
+                                        ctx.lineTo(0, h); ctx.lineTo(0, cut); ctx.closePath()
+                                    }
+                                    drawShape()
+                                    var base = ctx.createLinearGradient(0, 0, 0, h)
+                                    base.addColorStop(0, "#3d3d3d"); base.addColorStop(0.08, "#2a2a2a")
+                                    base.addColorStop(0.5, "#303030"); base.addColorStop(1.0, "#3a3a3a")
+                                    ctx.fillStyle = base; ctx.fill()
+                                    if (hp > 0) {
+                                        drawShape()
+                                        var teal = ctx.createLinearGradient(0, 0, 0, h)
+                                        teal.addColorStop(0, "#80e0e0"); teal.addColorStop(0.08, "#39c5bb")
+                                        teal.addColorStop(0.5, "#2a8a8a"); teal.addColorStop(1.0, "#3a6a6a")
+                                        ctx.globalAlpha = hp; ctx.fillStyle = teal; ctx.fill(); ctx.globalAlpha = 1.0
+                                    }
+                                    ctx.beginPath(); ctx.moveTo(cut, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h * 0.62)
+                                    ctx.lineTo(0, h * 0.62); ctx.lineTo(0, cut); ctx.closePath()
+                                    var gloss = ctx.createLinearGradient(0, 0, 0, h * 0.62)
+                                    gloss.addColorStop(0, "rgba(255,255,255," + (0.10 + hp * 0.18) + ")")
+                                    gloss.addColorStop(1, "rgba(255,255,255,0.00)")
+                                    ctx.fillStyle = gloss; ctx.fill()
+                                    ctx.beginPath(); ctx.moveTo(cut, 0.5); ctx.lineTo(w, 0.5)
+                                    ctx.strokeStyle = hp > 0.5 ? "#c0f4f4" : "#646464"; ctx.lineWidth = 1; ctx.stroke()
+                                }
+                            }
+
+                            Row {
+                                anchors.centerIn: parent
+                                spacing: 6
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "⇄"
+                                    color: playerCycleArea.containsMouse ? "#ffffff" : "#888888"
+                                    font.pixelSize: 11
+                                    Behavior on color { ColorAnimation { duration: 130 } }
+                                }
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: mediaPopup.displayPlayer ? mediaPopup.displayPlayer.identity : ""
+                                    color: playerCycleArea.containsMouse ? "#dddddd" : "#666666"
+                                    font.pixelSize: 10; font.family: "monospace"
+                                    Behavior on color { ColorAnimation { duration: 130 } }
+                                }
+                            }
+
+                            MouseArea {
+                                id: playerCycleArea
+                                anchors.fill: parent; hoverEnabled: true
+                                onContainsMouseChanged: playerCycleCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                                onClicked: {
+                                    var players = Mpris.players.values
+                                    if (players.length < 2) return
+                                    var idx = players.indexOf(panel.activePlayer)
+                                    panel.preferredPlayer = players[(idx + 1) % players.length]
+                                }
                             }
                         }
                     }
@@ -752,7 +852,7 @@ Variants {
                                 onContainsMouseChanged: clearAllCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
                                 onClicked: {
                                     var notifs = notifServer.trackedNotifications.values
-                                    for (var i = notifs.length - 1; i >= 0; i
+                                    for (var i = notifs.length - 1; i >= 0; i--) notifs[i].dismiss()
                                 }
                             }
                         }
@@ -978,7 +1078,7 @@ Variants {
 
                 Item {
                     id: bellItem
-                    width: 30; height: 30
+                    width: 35; height: 30
                     anchors.verticalCenter: parent.verticalCenter
 
                     Canvas {
