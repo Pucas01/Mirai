@@ -194,12 +194,45 @@ Window {
                 width: parent.width
                 height: 48
 
-                Rectangle {
+                Item {
+                    id: smSearchBox
                     anchors { fill: parent; leftMargin: 12; rightMargin: 12; topMargin: 6; bottomMargin: 6 }
-                    color: "#242424"
-                    border.color: smSearch.activeFocus ? "#39c5bb" : "#2e2e2e"
-                    border.width: 1
-                    radius: 3
+
+                    Canvas {
+                        id: smSearchBoxCanvas
+                        anchors.fill: parent
+                        property real focusProgress: smSearch.activeFocus ? 1.0 : 0.0
+                        Behavior on focusProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                        onFocusProgressChanged: requestPaint()
+                        onWidthChanged: requestPaint()
+                        onHeightChanged: requestPaint()
+                        onPaint: {
+                            var ctx = getContext("2d")
+                            ctx.clearRect(0, 0, width, height)
+                            var cut = 7, w = width, h = height, fp = focusProgress
+                            function drawShape() {
+                                ctx.beginPath()
+                                ctx.moveTo(cut, 0); ctx.lineTo(w, 0)
+                                ctx.lineTo(w, h - cut); ctx.lineTo(w - cut, h)
+                                ctx.lineTo(0, h); ctx.lineTo(0, cut); ctx.closePath()
+                            }
+                            drawShape()
+                            ctx.fillStyle = "#242424"; ctx.fill()
+                            ctx.beginPath()
+                            ctx.moveTo(cut, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h * 0.5)
+                            ctx.lineTo(0, h * 0.5); ctx.lineTo(0, cut); ctx.closePath()
+                            var gloss = ctx.createLinearGradient(0, 0, 0, h * 0.5)
+                            gloss.addColorStop(0, "rgba(255,255,255," + (0.05 + fp * 0.04) + ")")
+                            gloss.addColorStop(1, "rgba(255,255,255,0.00)")
+                            ctx.fillStyle = gloss; ctx.fill()
+                            ctx.beginPath(); ctx.moveTo(cut, 0.5); ctx.lineTo(w, 0.5)
+                            ctx.strokeStyle = fp > 0.5 ? "#c0f4f4" : "#3a3a3a"; ctx.lineWidth = 1; ctx.stroke()
+                            drawShape()
+                            ctx.strokeStyle = fp > 0 ? Qt.rgba(0.224, 0.773, 0.733, fp) : "#2e2e2e"
+                            ctx.lineWidth = 1
+                            ctx.stroke()
+                        }
+                    }
 
                     Text {
                         anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 10 }

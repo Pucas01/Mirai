@@ -5,4 +5,5 @@ import "./bar"
 
 ShellRoot {
     Bar {}
+    AppLauncher {}
 }

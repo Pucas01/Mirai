@@ -286,7 +286,7 @@ hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
-hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("command hyprlauncher"))
+hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("quickshell ipc call launcher toggle"))
 
 -- Move focus with mainMod + arrow keys
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
@@ -376,6 +376,13 @@ hl.window_rule({
     name  = "float-qs-settings",
     match = { title = "qs-settings" },
     float = true,
+})
+
+hl.window_rule({
+    name  = "float-qs-launcher",
+    match = { title = "qs-launcher" },
+    float = true,
+    stay_focused = true,
 })
 
 -- monitors: managed by qs-settings (bar settings > monitors page)

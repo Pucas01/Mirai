@@ -117,8 +117,11 @@ Window {
                         cursorShape: Qt.PointingHandCursor
                         onContainsMouseChanged: clearAllCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
                         onClicked: {
-                            var notifs = notifPopup.trackedNotifications.values
-                            for (var i = notifs.length - 1; i >= 0; i--) notifs[i].dismiss()
+                            notifPopup.closePopup()
+                            try {
+                                var notifs = notifPopup.trackedNotifications.values
+                                for (var i = notifs.length - 1; i >= 0; i--) notifs[i].dismiss()
+                            } catch (e) {}
                             notifPopup.notifCountReset()
                         }
                     }
