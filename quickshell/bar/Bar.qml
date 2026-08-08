@@ -740,10 +740,15 @@ Variants {
                             visible: parent.occupied
 
                             property bool active: modelData.active
-                            onActiveChanged: requestPaint()
+                            property real activeProgress: active ? 1.0 : 0.0
+                            Behavior on activeProgress { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                            property real hoverProgress: 0.0
+                            Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                            onActiveProgressChanged: requestPaint()
                             onWidthChanged: requestPaint()
                             onHeightChanged: requestPaint()
                             onVisibleChanged: if (visible) requestPaint()
+                            onHoverProgressChanged: requestPaint()
 
                             onPaint: {
                                 var ctx = getContext("2d")
@@ -752,7 +757,9 @@ Variants {
                                 var cut = 6
                                 var w = width
                                 var h = height
-                                var isActive = active
+                                var ap = activeProgress
+                                var hp = hoverProgress
+                                var tealAmount = Math.max(ap, hp * (1.0 - ap))
 
                                 function drawShape() {
                                     ctx.beginPath()
@@ -767,19 +774,25 @@ Variants {
 
                                 drawShape()
                                 var base = ctx.createLinearGradient(0, 0, 0, h)
-                                if (isActive) {
-                                    base.addColorStop(0,    "#80e0e0")
-                                    base.addColorStop(0.08, "#39c5bb")
-                                    base.addColorStop(0.5,  "#2a8a8a")
-                                    base.addColorStop(1.0,  "#3a6a6a")
-                                } else {
-                                    base.addColorStop(0,    "#3d3d3d")
-                                    base.addColorStop(0.08, "#2a2a2a")
-                                    base.addColorStop(0.5,  "#303030")
-                                    base.addColorStop(1.0,  "#3a3a3a")
-                                }
+                                base.addColorStop(0,    "#3d3d3d")
+                                base.addColorStop(0.08, "#2a2a2a")
+                                base.addColorStop(0.5,  "#303030")
+                                base.addColorStop(1.0,  "#3a3a3a")
                                 ctx.fillStyle = base
                                 ctx.fill()
+
+                                if (tealAmount > 0) {
+                                    drawShape()
+                                    var teal = ctx.createLinearGradient(0, 0, 0, h)
+                                    teal.addColorStop(0,    "#80e0e0")
+                                    teal.addColorStop(0.08, "#39c5bb")
+                                    teal.addColorStop(0.5,  "#2a8a8a")
+                                    teal.addColorStop(1.0,  "#3a6a6a")
+                                    ctx.globalAlpha = tealAmount
+                                    ctx.fillStyle = teal
+                                    ctx.fill()
+                                    ctx.globalAlpha = 1.0
+                                }
 
                                 ctx.beginPath()
                                 ctx.moveTo(cut, 0)
@@ -789,7 +802,7 @@ Variants {
                                 ctx.lineTo(0,   cut)
                                 ctx.closePath()
                                 var gloss = ctx.createLinearGradient(0, 0, 0, h * 0.62)
-                                gloss.addColorStop(0, isActive ? "rgba(255,255,255,0.54)" : "rgba(255,255,255,0.30)")
+                                gloss.addColorStop(0, "rgba(255,255,255," + (0.30 + tealAmount * 0.24) + ")")
                                 gloss.addColorStop(1, "rgba(255,255,255,0.00)")
                                 ctx.fillStyle = gloss
                                 ctx.fill()
@@ -797,7 +810,7 @@ Variants {
                                 ctx.beginPath()
                                 ctx.moveTo(cut, 0.5)
                                 ctx.lineTo(w,   0.5)
-                                ctx.strokeStyle = isActive ? "#c0f4f4" : "#646464"
+                                ctx.strokeStyle = tealAmount > 0.5 ? "#c0f4f4" : "#646464"
                                 ctx.lineWidth = 1
                                 ctx.stroke()
                             }
@@ -823,6 +836,8 @@ Variants {
 
                         MouseArea {
                             anchors.fill: parent
+                            hoverEnabled: true
+                            onContainsMouseChanged: pill.hoverProgress = containsMouse ? 1.0 : 0.0
                             onClicked: Hyprland.dispatch("hl.dsp.focus({workspace=\"" + modelData.id + "\"})")
                             onWheel: wheel => { wheel.accepted = false }
                         }
