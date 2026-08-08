@@ -49,6 +49,8 @@ Window {
     Timer { id: smOpenTimer; interval: 10; onTriggered: { startMenuWin.isOpen = true; smSearch.forceActiveFocus() } }
     Timer { id: smCloseTimer; interval: 220; onTriggered: startMenuWin.visible = false }
 
+    SettingsWin { id: settingsWin }
+
     Process { id: lockProc; command: ["bash", "-c", "loginctl lock-session"] }
     Process { id: logoutProc; command: ["bash", "-c", "hyprctl dispatch exit"] }
     Process { id: rebootProc; command: ["systemctl", "reboot"] }
@@ -111,6 +113,29 @@ Window {
                         text: "Arch Linux"
                         color: "#39c5bb"
                         font.pixelSize: 10; font.family: "monospace"
+                    }
+                }
+
+                Item {
+                    anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 12 }
+                    width: 30; height: 30
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰒓"
+                        color: settingsBtnArea.containsMouse ? "#39c5bb" : "#444444"
+                        font.pixelSize: 16
+                        Behavior on color { ColorAnimation { duration: 100 } }
+                    }
+
+                    MouseArea {
+                        id: settingsBtnArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked: {
+                            startMenuWin.closeMenu()
+                            settingsWin.visible = true
+                        }
                     }
                 }
 
