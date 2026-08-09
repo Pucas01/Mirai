@@ -10,6 +10,11 @@ Window {
     property alias startIconPath: settingsWin.startIconPath
     readonly property string defaultStartIcon: settingsWin.defaultStartIcon
     property alias audioSliderActive: settingsWin.audioSliderActive
+
+    function openSettings(section) {
+        if (section) settingsWin.section = section
+        settingsWin.visible = true
+    }
     property var allApps: {
         try {
             return DesktopEntries.applications.values

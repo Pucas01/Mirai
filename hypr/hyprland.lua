@@ -271,4 +271,10 @@ hl.window_rule({
     stay_focused = true,
 })
 
+hl.window_rule({
+    name  = "float-qs-ethernet",
+    match = { title = "qs-ethernet" },
+    float = true,
+})
+
 require("monitors")
