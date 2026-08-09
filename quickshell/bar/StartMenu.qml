@@ -54,7 +54,7 @@ Window {
 
     SettingsWin { id: settingsWin }
 
-    Process { id: lockProc; command: ["bash", "-c", "loginctl lock-session"] }
+    Process { id: lockProc; command: ["quickshell", "ipc", "call", "lock", "lock"] }
     Process { id: logoutProc; command: ["bash", "-c", "hyprctl dispatch exit"] }
     Process { id: rebootProc; command: ["systemctl", "reboot"] }
     Process { id: shutdownProc; command: ["systemctl", "poweroff"] }

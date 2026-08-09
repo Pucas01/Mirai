@@ -6,4 +6,5 @@ import "./bar"
 ShellRoot {
     Bar {}
     AppLauncher {}
+    LockWin {}
 }
