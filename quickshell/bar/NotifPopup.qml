@@ -7,6 +7,7 @@ Window {
     property bool isOpen: false
     property var trackedNotifications
     property int notifCount: 0
+    property var expandedGroups: ({})
     signal notifCountReset()
     flags: Qt.Popup | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint
     color: "transparent"
@@ -27,6 +28,37 @@ Window {
 
     Timer { id: notifOpenTimer; interval: 10; onTriggered: notifPopup.isOpen = true }
     Timer { id: notifCloseTimer; interval: 220; onTriggered: notifPopup.visible = false }
+
+    function activateNotif(notif) {
+        if (!notif || !notif.actions) return
+        var acts = notif.actions.values ? notif.actions.values : notif.actions
+        if (!acts || acts.length === 0) return
+        var target = acts.find(a => a.identifier === "default") ?? acts[0]
+        target.invoke()
+    }
+
+    function toggleGroup(appName) {
+        var g = Object.assign({}, notifPopup.expandedGroups)
+        g[appName] = !g[appName]
+        notifPopup.expandedGroups = g
+    }
+
+    function buildGroups() {
+        if (!notifPopup.trackedNotifications) return []
+        var flat = notifPopup.trackedNotifications.values ?? []
+        var order = []
+        var byApp = {}
+        for (var i = flat.length - 1; i >= 0; i--) {
+            var n = flat[i]
+            var key = n.appName || ""
+            if (!byApp[key]) {
+                byApp[key] = { appName: key, appIcon: n.appIcon, items: [] }
+                order.push(key)
+            }
+            byApp[key].items.push(n)
+        }
+        return order.map(k => byApp[k])
+    }
 
     PanelBackground {
         id: notifRect
@@ -142,151 +174,283 @@ Window {
                 height: parent.height - 37
                 clip: true
                 visible: notifPopup.notifCount > 0
-                model: notifPopup.trackedNotifications
+                model: notifPopup.buildGroups()
                 spacing: 3
                 topMargin: 5
                 bottomMargin: 5
+
+                Connections {
+                    target: notifPopup.trackedNotifications
+                    function onValuesChanged() { notifListView.model = notifPopup.buildGroups() }
+                }
+                Connections {
+                    target: notifPopup
+                    function onExpandedGroupsChanged() { notifListView.model = notifPopup.buildGroups() }
+                }
 
                 removeDisplaced: Transition {
                     NumberAnimation { properties: "y"; duration: 220; easing.type: Easing.OutCubic }
                 }
 
                 delegate: Item {
-                    id: notifDelegate
+                    id: groupDelegate
                     required property var modelData
+                    property bool expanded: modelData.items.length > 1 && !!notifPopup.expandedGroups[modelData.appName]
+                    property var latest: modelData.items[0]
                     width: notifListView.width
-                    height: 66
+                    implicitHeight: headerItem.height + (expanded ? childrenCol.height : 0)
+                    height: implicitHeight
                     clip: true
+
+                    Behavior on height { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
 
                     Item {
                         id: swipeItem
-                        anchors { top: parent.top; bottom: parent.bottom }
+                        anchors { top: parent.top; left: parent.left; right: parent.right }
+                        height: parent.height
                         width: parent.width - 8
                         x: swipeOffset + 4
                         opacity: Math.max(0, 1.0 - swipeOffset / 120)
 
                         property real swipeOffset: 0
 
-                        Canvas {
-                            id: notifCanvas
-                            anchors.fill: parent
-                            property real hoverProgress: 0.0
-                            Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
-                            onHoverProgressChanged: requestPaint()
-                            onWidthChanged: requestPaint()
-                            onHeightChanged: requestPaint()
-                            onPaint: {
-                                var ctx = getContext("2d")
-                                ctx.clearRect(0, 0, width, height)
-                                var cut = 5, w = width, h = height, hp = hoverProgress
-                                function drawShape() {
-                                    ctx.beginPath()
-                                    ctx.moveTo(cut, 0); ctx.lineTo(w, 0)
-                                    ctx.lineTo(w, h - cut); ctx.lineTo(w - cut, h)
-                                    ctx.lineTo(0, h); ctx.lineTo(0, cut); ctx.closePath()
-                                }
-                                drawShape()
-                                var base = ctx.createLinearGradient(0, 0, 0, h)
-                                base.addColorStop(0, "#3d3d3d"); base.addColorStop(0.08, "#2a2a2a")
-                                base.addColorStop(0.5, "#303030"); base.addColorStop(1.0, "#3a3a3a")
-                                ctx.fillStyle = base; ctx.fill()
-                                if (hp > 0) {
-                                    drawShape()
-                                    var teal = ctx.createLinearGradient(0, 0, 0, h)
-                                    teal.addColorStop(0, "#80e0e0"); teal.addColorStop(0.08, "#39c5bb")
-                                    teal.addColorStop(0.5, "#2a8a8a"); teal.addColorStop(1.0, "#3a6a6a")
-                                    ctx.globalAlpha = hp; ctx.fillStyle = teal; ctx.fill(); ctx.globalAlpha = 1.0
-                                }
-                                ctx.beginPath()
-                                ctx.moveTo(cut, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h * 0.62)
-                                ctx.lineTo(0, h * 0.62); ctx.lineTo(0, cut); ctx.closePath()
-                                var gloss = ctx.createLinearGradient(0, 0, 0, h * 0.62)
-                                gloss.addColorStop(0, "rgba(255,255,255," + (0.12 + hp * 0.2) + ")")
-                                gloss.addColorStop(1, "rgba(255,255,255,0.00)")
-                                ctx.fillStyle = gloss; ctx.fill()
-                                ctx.beginPath(); ctx.moveTo(cut, 0.5); ctx.lineTo(w, 0.5)
-                                ctx.strokeStyle = hp > 0.5 ? "#c0f4f4" : "#646464"; ctx.lineWidth = 1; ctx.stroke()
-                            }
-                        }
+                        Column {
+                            id: contentCol
+                            width: parent.width
 
-                        Row {
-                            anchors { left: parent.left; right: dismissItem.left; top: parent.top; bottom: parent.bottom; margins: 10; rightMargin: 4 }
-                            spacing: 8
+                            Item {
+                                id: headerItem
+                                width: parent.width
+                                height: 66
 
-                            IconImage {
-                                width: 22; height: 22
-                                anchors.verticalCenter: parent.verticalCenter
-                                source: modelData.appIcon !== "" ? "image://icon/" + modelData.appIcon : ""
-                                mipmap: true
-                                visible: modelData.appIcon !== ""
+                                Canvas {
+                                    id: notifCanvas
+                                    anchors.fill: parent
+                                    property real hoverProgress: 0.0
+                                    Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                    onHoverProgressChanged: requestPaint()
+                                    onWidthChanged: requestPaint()
+                                    onHeightChanged: requestPaint()
+                                    onPaint: {
+                                        var ctx = getContext("2d")
+                                        ctx.clearRect(0, 0, width, height)
+                                        var cut = 5, w = width, h = height, hp = hoverProgress
+                                        function drawShape() {
+                                            ctx.beginPath()
+                                            ctx.moveTo(cut, 0); ctx.lineTo(w, 0)
+                                            ctx.lineTo(w, h - cut); ctx.lineTo(w - cut, h)
+                                            ctx.lineTo(0, h); ctx.lineTo(0, cut); ctx.closePath()
+                                        }
+                                        drawShape()
+                                        var base = ctx.createLinearGradient(0, 0, 0, h)
+                                        base.addColorStop(0, "#3d3d3d"); base.addColorStop(0.08, "#2a2a2a")
+                                        base.addColorStop(0.5, "#303030"); base.addColorStop(1.0, "#3a3a3a")
+                                        ctx.fillStyle = base; ctx.fill()
+                                        if (hp > 0) {
+                                            drawShape()
+                                            var teal = ctx.createLinearGradient(0, 0, 0, h)
+                                            teal.addColorStop(0, "#80e0e0"); teal.addColorStop(0.08, "#39c5bb")
+                                            teal.addColorStop(0.5, "#2a8a8a"); teal.addColorStop(1.0, "#3a6a6a")
+                                            ctx.globalAlpha = hp; ctx.fillStyle = teal; ctx.fill(); ctx.globalAlpha = 1.0
+                                        }
+                                        ctx.beginPath()
+                                        ctx.moveTo(cut, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h * 0.62)
+                                        ctx.lineTo(0, h * 0.62); ctx.lineTo(0, cut); ctx.closePath()
+                                        var gloss = ctx.createLinearGradient(0, 0, 0, h * 0.62)
+                                        gloss.addColorStop(0, "rgba(255,255,255," + (0.12 + hp * 0.2) + ")")
+                                        gloss.addColorStop(1, "rgba(255,255,255,0.00)")
+                                        ctx.fillStyle = gloss; ctx.fill()
+                                        ctx.beginPath(); ctx.moveTo(cut, 0.5); ctx.lineTo(w, 0.5)
+                                        ctx.strokeStyle = hp > 0.5 ? "#c0f4f4" : "#646464"; ctx.lineWidth = 1; ctx.stroke()
+                                    }
+                                }
+
+                                Row {
+                                    anchors { left: parent.left; right: dismissItem.left; top: parent.top; bottom: parent.bottom; margins: 10; rightMargin: 4 }
+                                    spacing: 8
+
+                                    IconImage {
+                                        width: 22; height: 22
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        source: groupDelegate.modelData.appIcon !== "" ? "image://icon/" + groupDelegate.modelData.appIcon : ""
+                                        mipmap: true
+                                        visible: groupDelegate.modelData.appIcon !== ""
+                                    }
+
+                                    Column {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: parent.width - (groupDelegate.modelData.appIcon !== "" ? 30 : 0) - (countBadge.visible ? countBadge.width + 6 : 0)
+                                        spacing: 4
+
+                                        Text {
+                                            width: parent.width
+                                            text: groupDelegate.latest.summary
+                                            color: notifItemArea.containsMouse ? "#ffffff" : "#d0d0d0"
+                                            font.pixelSize: 12; font.family: "monospace"
+                                            elide: Text.ElideRight
+                                            Behavior on color { ColorAnimation { duration: 130 } }
+                                        }
+
+                                        Text {
+                                            width: parent.width
+                                            text: groupDelegate.latest.body
+                                            color: notifItemArea.containsMouse ? "#bbbbbb" : "#666666"
+                                            font.pixelSize: 10; font.family: "monospace"
+                                            elide: Text.ElideRight
+                                            maximumLineCount: 2
+                                            wrapMode: Text.Wrap
+                                            visible: groupDelegate.latest.body !== ""
+                                            Behavior on color { ColorAnimation { duration: 130 } }
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        id: countBadge
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        visible: groupDelegate.modelData.items.length > 1
+                                        width: countText.width + 12; height: 16; radius: 8
+                                        color: groupDelegate.expanded ? "#39c5bb" : "#4a4a4a"
+                                        Behavior on color { ColorAnimation { duration: 130 } }
+                                        Text {
+                                            id: countText
+                                            anchors.centerIn: parent
+                                            text: "+" + (groupDelegate.modelData.items.length - 1)
+                                            color: "#ffffff"
+                                            font.pixelSize: 9; font.family: "monospace"
+                                        }
+                                    }
+                                }
+
+                                Item {
+                                    id: dismissItem
+                                    anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 8 }
+                                    width: 20; height: 20; z: 1
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "×"
+                                        color: dismissArea.containsMouse ? "#ffffff" : "#555555"
+                                        font.pixelSize: 16
+                                        Behavior on color { ColorAnimation { duration: 100 } }
+                                    }
+
+                                    MouseArea {
+                                        id: dismissArea
+                                        anchors.fill: parent; hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            var items = groupDelegate.modelData.items
+                                            for (var i = items.length - 1; i >= 0; i--) items[i].dismiss()
+                                        }
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: notifItemArea
+                                    anchors.fill: parent; hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onContainsMouseChanged: notifCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                                    onClicked: {
+                                        if (groupDelegate.modelData.items.length > 1) {
+                                            notifPopup.toggleGroup(groupDelegate.modelData.appName)
+                                        } else {
+                                            notifPopup.activateNotif(groupDelegate.latest)
+                                        }
+                                    }
+                                }
                             }
 
                             Column {
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width - (modelData.appIcon !== "" ? 30 : 0)
-                                spacing: 4
+                                id: childrenCol
+                                width: parent.width
+                                visible: groupDelegate.expanded
+                                Repeater {
+                                    model: groupDelegate.expanded ? groupDelegate.modelData.items.slice(1) : []
+                                    delegate: Item {
+                                        id: childItem
+                                        required property var modelData
+                                        width: childrenCol.width
+                                        height: 44
 
-                                Text {
-                                    width: parent.width
-                                    text: modelData.summary
-                                    color: notifItemArea.containsMouse ? "#ffffff" : "#d0d0d0"
-                                    font.pixelSize: 12; font.family: "monospace"
-                                    elide: Text.ElideRight
-                                    Behavior on color { ColorAnimation { duration: 130 } }
+                                        Rectangle {
+                                            anchors { fill: parent; margins: 2 }
+                                            radius: 4
+                                            color: childArea.containsMouse ? "#333333" : "transparent"
+                                            Behavior on color { ColorAnimation { duration: 130 } }
+
+                                            Row {
+                                                anchors { left: parent.left; right: childDismiss.left; top: parent.top; bottom: parent.bottom; margins: 8; rightMargin: 4 }
+                                                spacing: 8
+
+                                                Column {
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    width: parent.width
+                                                    spacing: 2
+                                                    Text {
+                                                        width: parent.width
+                                                        text: childItem.modelData.summary
+                                                        color: "#c0c0c0"
+                                                        font.pixelSize: 11; font.family: "monospace"
+                                                        elide: Text.ElideRight
+                                                    }
+                                                    Text {
+                                                        width: parent.width
+                                                        text: childItem.modelData.body
+                                                        color: "#666666"
+                                                        font.pixelSize: 9; font.family: "monospace"
+                                                        elide: Text.ElideRight
+                                                        maximumLineCount: 1
+                                                        visible: childItem.modelData.body !== ""
+                                                    }
+                                                }
+                                            }
+
+                                            Item {
+                                                id: childDismiss
+                                                anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 6 }
+                                                width: 18; height: 18; z: 1
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: "×"
+                                                    color: childDismissArea.containsMouse ? "#ffffff" : "#555555"
+                                                    font.pixelSize: 14
+                                                }
+                                                MouseArea {
+                                                    id: childDismissArea
+                                                    anchors.fill: parent; hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: childItem.modelData.dismiss()
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                id: childArea
+                                                anchors.fill: parent; hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: notifPopup.activateNotif(childItem.modelData)
+                                            }
+                                        }
+                                    }
                                 }
-
-                                Text {
-                                    width: parent.width
-                                    text: modelData.body
-                                    color: notifItemArea.containsMouse ? "#bbbbbb" : "#666666"
-                                    font.pixelSize: 10; font.family: "monospace"
-                                    elide: Text.ElideRight
-                                    maximumLineCount: 2
-                                    wrapMode: Text.Wrap
-                                    visible: modelData.body !== ""
-                                    Behavior on color { ColorAnimation { duration: 130 } }
-                                }
                             }
-                        }
-
-                        Item {
-                            id: dismissItem
-                            anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 8 }
-                            width: 20; height: 20; z: 1
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "×"
-                                color: dismissArea.containsMouse ? "#ffffff" : "#555555"
-                                font.pixelSize: 16
-                                Behavior on color { ColorAnimation { duration: 100 } }
-                            }
-
-                            MouseArea {
-                                id: dismissArea
-                                anchors.fill: parent; hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: modelData.dismiss()
-                            }
-                        }
-
-                        MouseArea {
-                            id: notifItemArea
-                            anchors.fill: parent; hoverEnabled: true
-                            onContainsMouseChanged: notifCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
                         }
                     }
 
                     DragHandler {
                         id: notifSwipe
+                        target: null
                         xAxis.enabled: true
                         xAxis.minimum: 0
                         yAxis.enabled: false
                         onTranslationChanged: if (active) swipeItem.swipeOffset = Math.max(0, translation.x)
                         onActiveChanged: {
                             if (!active) {
-                                if (swipeItem.swipeOffset > 80) notifDelegate.modelData.dismiss()
-                                else snapBackAnim.start()
+                                if (swipeItem.swipeOffset > 80) {
+                                    var items = groupDelegate.modelData.items
+                                    for (var i = items.length - 1; i >= 0; i--) items[i].dismiss()
+                                } else {
+                                    snapBackAnim.start()
+                                }
                             }
                         }
                     }
