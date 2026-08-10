@@ -1,5 +1,6 @@
 hl.on("hyprland.start", function ()
     hl.exec_cmd("awww-daemon")
+    hl.exec_cmd("nohup quickshell >/dev/null 2>&1 &")
     hl.exec_cmd("bash ~/.config/hypr/scripts/quickshell-watchdog.sh")
 end)
 

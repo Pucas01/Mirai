@@ -83,8 +83,63 @@ Item {
         z: 5
 
         SectionBanner {
-            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16; right: modeDropdown.left; rightMargin: 12 }
+            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16; right: scaleStepper.left; rightMargin: 12 }
             label: "monitors"
+        }
+
+        Row {
+            id: scaleStepper
+            anchors { right: modeDropdown.left; verticalCenter: parent.verticalCenter; rightMargin: 12 }
+            spacing: 4
+            visible: settingsWin.selectedMonitor !== null
+
+            component StepBtn: Item {
+                property string label: ""
+                signal clicked()
+                width: 22; height: 22
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: stepBtnArea.containsMouse ? "#3a3a3a" : "#2a2a2a"
+                    border.color: "#3a3a3a"
+                    border.width: 1
+                    Behavior on color { ColorAnimation { duration: 100 } }
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: parent.label
+                    color: stepBtnArea.containsMouse ? "#ffffff" : "#999999"
+                    font.pixelSize: 12; font.family: "monospace"
+                }
+
+                MouseArea {
+                    id: stepBtnArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: parent.clicked()
+                }
+            }
+
+            StepBtn {
+                label: "−"
+                onClicked: if (settingsWin.selectedMonitor) settingsWin.setMonitorScale(settingsWin.selectedMonitor.name, settingsWin.selectedMonitor.scale - 0.05)
+            }
+
+            Text {
+                width: 44
+                anchors.verticalCenter: parent.verticalCenter
+                horizontalAlignment: Text.AlignHCenter
+                text: settingsWin.selectedMonitor ? settingsWin.selectedMonitor.scale.toFixed(2) + "x" : "--"
+                color: "#cccccc"
+                font.pixelSize: 10; font.family: "monospace"
+            }
+
+            StepBtn {
+                label: "+"
+                onClicked: if (settingsWin.selectedMonitor) settingsWin.setMonitorScale(settingsWin.selectedMonitor.name, settingsWin.selectedMonitor.scale + 0.05)
+            }
         }
 
         Row {

@@ -90,6 +90,18 @@ Window {
         settingsWin.monitors = arr
     }
 
+    function setMonitorScale(name, scale) {
+        var arr = settingsWin.monitors.map(function(m) {
+            var c = {}
+            for (var k in m) c[k] = m[k]
+            return c
+        })
+        var mon = arr.find(function(m) { return m.name === name })
+        if (!mon) return
+        mon.scale = Math.max(0.5, Math.min(3.0, scale))
+        settingsWin.monitors = arr
+    }
+
     function refreshMonitors() {
         monitorsProc.running = false
         monitorsProc.running = true
