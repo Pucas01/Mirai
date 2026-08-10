@@ -11,7 +11,7 @@ Window {
     flags: Qt.Popup | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint
     color: "transparent"
     width: 260
-    height: 400
+    height: width + infoPanel.height + 2
     visible: false
 
     function open(x, y) {
@@ -125,8 +125,11 @@ Window {
             }
 
             Rectangle {
+                id: infoPanel
                 width: parent.width
-                height: parent.height - parent.width
+                height: Mpris.players.values.length > 1
+                    ? playerSwitcher.y + playerSwitcher.height + 10
+                    : controlsRow.y + controlsRow.height + 16
                 color: "#1a1a1a"
 
                 Column {
@@ -208,7 +211,8 @@ Window {
                 }
 
                 Row {
-                    anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: Mpris.players.values.length > 1 ? 46 : 16 }
+                    id: controlsRow
+                    anchors { horizontalCenter: parent.horizontalCenter; top: progressArea.bottom; topMargin: 26 }
                     spacing: 12
 
                     component MediaBtn: Item {
@@ -313,8 +317,9 @@ Window {
                 }
 
                 Item {
+                    id: playerSwitcher
                     visible: Mpris.players.values.length > 1
-                    anchors { left: parent.left; right: parent.right; bottom: parent.bottom; bottomMargin: 10; leftMargin: 14; rightMargin: 14 }
+                    anchors { left: parent.left; right: parent.right; top: controlsRow.bottom; topMargin: 18; leftMargin: 14; rightMargin: 14 }
                     height: 28
 
                     Canvas {
