@@ -80,6 +80,79 @@ Variants {
         property string netType: ""
         property bool netConnected: false
 
+        property bool weatherLoaded: false
+        property string weatherTempC: ""
+        property string weatherDesc: ""
+        property int weatherCode: 0
+        property string weatherFeelsLikeC: ""
+        property string weatherHumidity: ""
+        property string weatherWindKmph: ""
+        property string weatherUvIndex: ""
+        property string weatherAreaName: ""
+        property var weatherForecast: []
+
+        function refreshWeather() {
+            weatherProc.running = false
+            weatherProc.running = true
+        }
+
+        Timer {
+            interval: 900000
+            running: true
+            repeat: true
+            triggeredOnStart: true
+            onTriggered: panel.refreshWeather()
+        }
+
+        Process {
+            id: weatherProc
+            command: ["curl", "-s", "--max-time", "5", "wttr.in/?format=j1"]
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    try {
+                        var data = JSON.parse(text)
+                        var cur = data.current_condition[0]
+                        panel.weatherTempC = cur.temp_C
+                        panel.weatherDesc = cur.weatherDesc[0].value
+                        panel.weatherCode = parseInt(cur.weatherCode)
+                        panel.weatherFeelsLikeC = cur.FeelsLikeC
+                        panel.weatherHumidity = cur.humidity
+                        panel.weatherWindKmph = cur.windspeedKmph
+                        panel.weatherUvIndex = cur.uvIndex
+                        panel.weatherAreaName = data.nearest_area && data.nearest_area[0]
+                            ? data.nearest_area[0].areaName[0].value
+                            : ""
+                        panel.weatherForecast = data.weather.map(function(d) {
+                            var noon = d.hourly.find(function(h) { return h.time === "1200" }) || d.hourly[Math.floor(d.hourly.length / 2)]
+                            return {
+                                date: d.date,
+                                maxTempC: d.maxtempC,
+                                minTempC: d.mintempC,
+                                code: parseInt(noon.weatherCode),
+                                chanceOfRain: noon.chanceofrain,
+                                sunrise: d.astronomy[0].sunrise,
+                                sunset: d.astronomy[0].sunset
+                            }
+                        })
+                        panel.weatherLoaded = true
+                    } catch (e) {
+                        panel.weatherLoaded = false
+                    }
+                }
+            }
+        }
+
+        function weatherGlyph(code) {
+            if ([113].includes(code)) return "󰖙"
+            if ([116].includes(code)) return "󰖕"
+            if ([119, 122].includes(code)) return "󰖐"
+            if ([143, 248, 260].includes(code)) return "󰖑"
+            if ([176, 179, 182, 185, 263, 266, 293, 296, 299, 302, 305, 308, 311, 314, 317, 320, 323, 326, 353, 356, 359, 362, 365, 368, 371].includes(code)) return "󰖗"
+            if ([200, 386, 389, 392, 395].includes(code)) return "󰙾"
+            if ([227, 230, 329, 332, 335, 338, 350, 374, 377].includes(code)) return "󰼶"
+            return "󰖐"
+        }
+
         function refreshNet() {
             netStatusProc.running = false
             netStatusProc.running = true
@@ -173,6 +246,20 @@ Variants {
 
         NetworkPopup {
             id: networkPopup
+        }
+
+        WeatherPopup {
+            id: weatherPopup
+            glyph: panel.weatherGlyph(panel.weatherCode)
+            desc: panel.weatherDesc
+            tempC: panel.weatherTempC
+            feelsLikeC: panel.weatherFeelsLikeC
+            humidity: panel.weatherHumidity
+            windKmph: panel.weatherWindKmph
+            uvIndex: panel.weatherUvIndex
+            areaName: panel.weatherAreaName
+            forecast: panel.weatherForecast
+            glyphFn: panel.weatherGlyph
         }
 
         AudioOSD {
@@ -556,6 +643,93 @@ Variants {
                             clockText.text = Qt.formatDateTime(now, "hh:mm:ss")
                             dateText.text = Qt.formatDateTime(now, "ddd dd MMM")
                         }
+                    }
+                }
+            }
+
+            Item {
+                id: weatherItem
+                anchors { left: wsArea.right; verticalCenter: parent.verticalCenter; leftMargin: 10 }
+                visible: panel.weatherLoaded
+                width: visible ? weatherRow.width + 20 : 0
+                height: 30
+
+                Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+
+                Canvas {
+                    id: weatherCanvas
+                    anchors.fill: parent
+                    property real hoverProgress: 0.0
+                    Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                    onHoverProgressChanged: requestPaint()
+                    onWidthChanged: requestPaint()
+                    onHeightChanged: requestPaint()
+                    onPaint: {
+                        var ctx = getContext("2d")
+                        ctx.clearRect(0, 0, width, height)
+                        var cut = 6, w = width, h = height, hp = hoverProgress
+                        function drawShape() {
+                            ctx.beginPath()
+                            ctx.moveTo(cut, 0); ctx.lineTo(w, 0)
+                            ctx.lineTo(w, h - cut); ctx.lineTo(w - cut, h)
+                            ctx.lineTo(0, h); ctx.lineTo(0, cut); ctx.closePath()
+                        }
+                        drawShape()
+                        var base = ctx.createLinearGradient(0, 0, 0, h)
+                        base.addColorStop(0, "#3d3d3d"); base.addColorStop(0.08, "#2a2a2a")
+                        base.addColorStop(0.5, "#303030"); base.addColorStop(1.0, "#3a3a3a")
+                        ctx.fillStyle = base; ctx.fill()
+                        if (hp > 0) {
+                            drawShape()
+                            var teal = ctx.createLinearGradient(0, 0, 0, h)
+                            teal.addColorStop(0, "#80e0e0"); teal.addColorStop(0.08, "#39c5bb")
+                            teal.addColorStop(0.5, "#2a8a8a"); teal.addColorStop(1.0, "#3a6a6a")
+                            ctx.globalAlpha = hp; ctx.fillStyle = teal; ctx.fill(); ctx.globalAlpha = 1.0
+                        }
+                        ctx.beginPath()
+                        ctx.moveTo(cut, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h * 0.62)
+                        ctx.lineTo(0, h * 0.62); ctx.lineTo(0, cut); ctx.closePath()
+                        var gloss = ctx.createLinearGradient(0, 0, 0, h * 0.62)
+                        gloss.addColorStop(0, "rgba(255,255,255," + (0.12 + hp * 0.2) + ")")
+                        gloss.addColorStop(1, "rgba(255,255,255,0.00)")
+                        ctx.fillStyle = gloss; ctx.fill()
+                        ctx.beginPath(); ctx.moveTo(cut, 0.5); ctx.lineTo(w, 0.5)
+                        ctx.strokeStyle = hp > 0.5 ? "#c0f4f4" : "#646464"; ctx.lineWidth = 1; ctx.stroke()
+                    }
+                }
+
+                Row {
+                    id: weatherRow
+                    anchors.centerIn: parent
+                    spacing: 6
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: panel.weatherGlyph(panel.weatherCode)
+                        color: weatherMouseArea.containsMouse ? "#ffffff" : "#999999"
+                        font.pixelSize: 14
+                        Behavior on color { ColorAnimation { duration: 130 } }
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: panel.weatherTempC + "°"
+                        color: weatherMouseArea.containsMouse ? "#ffffff" : "#999999"
+                        font.pixelSize: 12; font.family: "monospace"
+                        Behavior on color { ColorAnimation { duration: 130 } }
+                    }
+                }
+
+                MouseArea {
+                    id: weatherMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onContainsMouseChanged: weatherCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                    onClicked: {
+                        var center = mapToGlobal(width / 2, 0)
+                        var barBottom = barBg.mapToGlobal(0, barBg.height)
+                        weatherPopup.open(center.x - weatherPopup.width / 2, barBottom.y + 6)
                     }
                 }
             }
