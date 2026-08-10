@@ -1,0 +1,71 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+format = """
+[](fg:c1)$os$username\
+[](bg:c2 fg:c1)$directory\
+[](fg:c2)\
+$git_branch$git_status\
+$fill\
+$cmd_duration\
+$line_break\
+$character"""
+
+palette = "mirai"
+
+[palettes.mirai]
+c1 = "#242424"
+c2 = "#2a8a8a"
+teal = "#39c5bb"
+teal_bright = "#80e0e0"
+bg = "#1a1a1a"
+fg = "#d0d0d0"
+dim = "#666666"
+red = "#ff6b6b"
+green = "#6bff9e"
+yellow = "#e0c05a"
+
+[os]
+disabled = false
+style = "bg:c1 fg:teal"
+format = "[ $symbol ]($style)"
+
+[os.symbols]
+Arch = "󰣇"
+
+[username]
+show_always = true
+style_user = "bg:c1 fg:fg"
+style_root = "bg:c1 fg:red"
+format = "[$user]($style)[ ]($style)"
+
+[directory]
+style = "bg:c2 fg:bg"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncation_symbol = "…/"
+truncate_to_repo = true
+
+[git_branch]
+style = "fg:teal"
+format = "[ $symbol$branch]($style)"
+symbol = " "
+
+[git_status]
+style = "fg:yellow"
+format = "[$all_status$ahead_behind ]($style)"
+
+[fill]
+symbol = " "
+
+[cmd_duration]
+min_time = 2000
+style = "fg:dim"
+format = "[ 󱦟 $duration]($style)"
+
+[line_break]
+disabled = false
+
+[character]
+success_symbol = "[❯](bold teal)"
+error_symbol = "[❯](bold red)"
+vicmd_symbol = "[❮](bold teal)"
