@@ -105,6 +105,46 @@ Window {
         }
     }
 
+    component SectionBanner: Item {
+        property string label: ""
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: parent.width - 28
+        height: 26
+
+        Canvas {
+            anchors.fill: parent
+            onPaint: {
+                var ctx = getContext("2d")
+                ctx.clearRect(0, 0, width, height)
+                var cut = 14, w = width, h = height
+                ctx.beginPath()
+                ctx.moveTo(0, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h - cut)
+                ctx.lineTo(w - cut, h); ctx.lineTo(0, h); ctx.closePath()
+                var base = ctx.createLinearGradient(0, 0, 0, h)
+                base.addColorStop(0, "#5a5a5a"); base.addColorStop(0.08, "#454545")
+                base.addColorStop(0.5, "#3a3a3a"); base.addColorStop(1.0, "#2e2e2e")
+                ctx.fillStyle = base
+                ctx.fill()
+
+                ctx.beginPath()
+                ctx.moveTo(0, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h * 0.5); ctx.lineTo(0, h * 0.5); ctx.closePath()
+                var gloss = ctx.createLinearGradient(0, 0, 0, h * 0.5)
+                gloss.addColorStop(0, "rgba(255,255,255,0.18)")
+                gloss.addColorStop(1, "rgba(255,255,255,0.00)")
+                ctx.fillStyle = gloss
+                ctx.fill()
+            }
+        }
+
+        Text {
+            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 14 }
+            text: parent.label.toUpperCase()
+            color: "#ffffff"
+            font.pixelSize: 11; font.family: "Orbitron"; font.bold: true
+            font.letterSpacing: 2
+        }
+    }
+
     Rectangle {
         id: audioRect
         anchors.fill: parent
@@ -158,22 +198,12 @@ Window {
                 }
             }
 
-            Rectangle { width: parent.width; height: 1; color: "#2a2a2a" }
-
-            Item {
-                width: parent.width
-                height: 24
-                Text {
-                    anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 14 }
-                    text: "applications"
-                    color: "#666666"
-                    font.pixelSize: 10; font.family: "monospace"
-                }
-            }
+            SectionBanner { label: "applications" }
+            Item { width: 1; height: 8 }
 
             ListView {
                 width: parent.width
-                height: parent.height - 60 - 1 - 24
+                height: parent.height - 60 - 26 - 8
                 clip: true
                 model: audioPopup.playbackStreams
                 spacing: 2

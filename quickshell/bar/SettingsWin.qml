@@ -114,6 +114,19 @@ Window {
 
     Component.onCompleted: { loadPfpProc.running = true; loadStartIconProc.running = true }
 
+    component SectionBanner: Item {
+        property string label: ""
+        height: 26
+
+        Text {
+            anchors { left: parent.left; verticalCenter: parent.verticalCenter }
+            text: parent.label.toUpperCase()
+            color: "#ffffff"
+            font.pixelSize: 11; font.family: "Orbitron"; font.bold: true
+            font.letterSpacing: 2
+        }
+    }
+
     Process {
         id: floatProc
         command: ["hyprctl", "dispatch", "setfloating", "title:qs-settings"]
@@ -504,14 +517,13 @@ Window {
                         anchors { top: parent.top; left: parent.left; right: parent.right }
                         height: 44
 
-                        Text {
-                            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
-                            text: "profile"
-                            color: "#ffffff"
-                            font.pixelSize: 13; font.family: "monospace"
+                        SectionBanner {
+                            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16; right: pfpDirText.left; rightMargin: 10 }
+                            label: "profile"
                         }
 
                         Text {
+                            id: pfpDirText
                             anchors { right: openPfpFolderBtn.left; verticalCenter: parent.verticalCenter; rightMargin: 10 }
                             text: settingsWin.pfpDir
                             color: "#444444"
@@ -586,11 +598,6 @@ Window {
                                     openPfpDirProc.running = true
                                 }
                             }
-                        }
-
-                        Rectangle {
-                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                            height: 1; color: "#2a2a2a"
                         }
                     }
 
@@ -885,14 +892,13 @@ Window {
                         anchors { top: parent.top; left: parent.left; right: parent.right }
                         height: 44
 
-                        Text {
-                            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
-                            text: "wallpaper"
-                            color: "#ffffff"
-                            font.pixelSize: 13; font.family: "monospace"
+                        SectionBanner {
+                            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16; right: wpDirText.left; rightMargin: 10 }
+                            label: "wallpaper"
                         }
 
                         Text {
+                            id: wpDirText
                             anchors { right: openFolderBtn.left; verticalCenter: parent.verticalCenter; rightMargin: 10 }
                             text: settingsWin.wallpaperDir
                             color: "#444444"
@@ -967,11 +973,6 @@ Window {
                                     openWallpaperDirProc.running = true
                                 }
                             }
-                        }
-
-                        Rectangle {
-                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                            height: 1; color: "#2a2a2a"
                         }
                     }
 
@@ -1123,11 +1124,9 @@ Window {
                         height: 44
                         z: 5
 
-                        Text {
-                            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
-                            text: "monitors"
-                            color: "#ffffff"
-                            font.pixelSize: 13; font.family: "monospace"
+                        SectionBanner {
+                            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16; right: modeDropdown.left; rightMargin: 12 }
+                            label: "monitors"
                         }
 
                         Row {
@@ -1281,11 +1280,6 @@ Window {
                                     }
                                 }
                             }
-                        }
-
-                        Rectangle {
-                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                            height: 1; color: "#2a2a2a"
                         }
                     }
 
@@ -1626,16 +1620,9 @@ Window {
                         anchors { top: parent.top; left: parent.left; right: parent.right }
                         height: 44
 
-                        Text {
-                            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
-                            text: "audio"
-                            color: "#ffffff"
-                            font.pixelSize: 13; font.family: "monospace"
-                        }
-
-                        Rectangle {
-                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                            height: 1; color: "#2a2a2a"
+                        SectionBanner {
+                            anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; leftMargin: 16; rightMargin: 16 }
+                            label: "audio"
                         }
                     }
 
@@ -1945,14 +1932,13 @@ Window {
                         anchors { top: parent.top; left: parent.left; right: parent.right }
                         height: 44
 
-                        Text {
-                            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
-                            text: "bluetooth"
-                            color: "#ffffff"
-                            font.pixelSize: 13; font.family: "monospace"
+                        SectionBanner {
+                            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16; right: btStatusText.left; rightMargin: 10 }
+                            label: "bluetooth"
                         }
 
                         Text {
+                            id: btStatusText
                             anchors { right: btPowerSwitch.left; verticalCenter: parent.verticalCenter; rightMargin: 10 }
                             text: bluetoothSection.adapter ? (bluetoothSection.adapter.enabled ? "on" : "off") : "no adapter"
                             color: "#666666"
@@ -1966,10 +1952,6 @@ Window {
                             onToggled: if (bluetoothSection.adapter) bluetoothSection.adapter.enabled = !bluetoothSection.adapter.enabled
                         }
 
-                        Rectangle {
-                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                            height: 1; color: "#2a2a2a"
-                        }
                     }
 
                     Flickable {
@@ -2391,14 +2373,13 @@ Window {
                         anchors { top: parent.top; left: parent.left; right: parent.right }
                         height: 44
 
-                        Text {
-                            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
-                            text: "network"
-                            color: "#ffffff"
-                            font.pixelSize: 13; font.family: "monospace"
+                        SectionBanner {
+                            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16; right: netStatusText.left; rightMargin: 10 }
+                            label: "network"
                         }
 
                         Text {
+                            id: netStatusText
                             anchors { right: wifiPowerSwitch.left; verticalCenter: parent.verticalCenter; rightMargin: 10 }
                             text: !networkSection.wifiPresent ? "no wifi adapter" : (networkSection.wifiEnabled ? "on" : "off")
                             color: "#666666"
@@ -2416,11 +2397,6 @@ Window {
                                 radioToggleProc.running = true
                                 networkSection.wifiEnabled = !networkSection.wifiEnabled
                             }
-                        }
-
-                        Rectangle {
-                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                            height: 1; color: "#2a2a2a"
                         }
                     }
 
@@ -2740,16 +2716,9 @@ Window {
                         anchors { top: parent.top; left: parent.left; right: parent.right }
                         height: 44
 
-                        Text {
-                            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
-                            text: "about"
-                            color: "#ffffff"
-                            font.pixelSize: 13; font.family: "monospace"
-                        }
-
-                        Rectangle {
-                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                            height: 1; color: "#2a2a2a"
+                        SectionBanner {
+                            anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; leftMargin: 16; rightMargin: 16 }
+                            label: "about"
                         }
                     }
 
