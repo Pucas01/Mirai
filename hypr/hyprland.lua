@@ -1,7 +1,5 @@
 
 
--- https:
-
 package.path = package.path .. ";./?.lua;./?/init.lua"
 local smw = require("plugins.split-monitor-workspaces")
 
@@ -19,7 +17,6 @@ for i = 1, smw.get_amount_of_workspaces() do
     hl.bind(mainMod .. " + SHIFT +" .. n, smw.move_to_workspace_silent(n))
 end
 
--- See https:
 hl.monitor({
     output   = "",
     mode     = "preferred",
@@ -31,22 +28,15 @@ local terminal    = "kitty"
 local fileManager = "nautilus"
 local menu        = "hyprlauncher"
 
--- See https:
-
 hl.on("hyprland.start", function ()
     hl.exec_cmd("awww-daemon")
 end)
-
--- See https:
 
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 
 hl.env("QT_QPA_PLATFORMTHEME", "gtk3")
 
--- See https:
-
--- Refer to https:
 hl.config({
     general = {
         gaps_in  = 5,
@@ -61,7 +51,6 @@ hl.config({
 
         resize_on_border = false,
 
-        -- Please see https:
         allow_tearing = false,
 
         layout = "dwindle",
@@ -93,7 +82,6 @@ hl.config({
     },
 })
 
--- Default curves and animations, see https:
 hl.curve("easeOutQuint",   { type = "bezier", points = { {0.23, 1},    {0.32, 1}    } })
 hl.curve("easeInOutCubic", { type = "bezier", points = { {0.65, 0.05}, {0.36, 1}    } })
 hl.curve("linear",         { type = "bezier", points = { {0, 0},       {1, 1}       } })
@@ -120,23 +108,18 @@ hl.animation({ leaf = "workspacesIn",  enabled = true,  speed = 2.5,  bezier = "
 hl.animation({ leaf = "workspacesOut", enabled = true,  speed = 2.5,  bezier = "easeOutQuint", style = "slide" })
 hl.animation({ leaf = "zoomFactor",    enabled = true,  speed = 7,    bezier = "quick" })
 
--- Ref https:
-
--- See https:
 hl.config({
     dwindle = {
         preserve_split = true,
     },
 })
 
--- See https:
 hl.config({
     master = {
         new_status = "master",
     },
 })
 
--- See https:
 hl.config({
     scrolling = {
         fullscreen_on_one_column = true,
@@ -177,7 +160,6 @@ hl.gesture({
     action = "workspace"
 })
 
--- See https:
 hl.device({
     name        = "epic-mouse-v1",
     sensitivity = -0.5,
@@ -185,7 +167,6 @@ hl.device({
 
 local mainMod = "SUPER"
 
--- Example binds, see https:
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))
 local closeWindowBind = hl.bind(mainMod .. " + C", hl.dsp.window.close())
 
@@ -224,9 +205,6 @@ hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("playerctl next"),       { locked = tr
 hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"),   { locked = true })
-
--- See https:
--- and https:
 
 local suppressMaximizeRule = hl.window_rule({
 

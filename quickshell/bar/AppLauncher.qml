@@ -12,7 +12,7 @@ Window {
     visible: false
 
     property string searchText: ""
-    property string usagePath: "/home/pucas02/.cache/qs-launcher-usage.json"
+    property string usagePath: Quickshell.env("HOME") + "/.cache/qs-launcher-usage.json"
     property var usageStats: ({})
 
     property var allApps: {

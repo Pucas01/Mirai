@@ -216,7 +216,7 @@ Variants {
 
         Process {
             id: cavaProc
-            command: ["cava", "-p", "/home/pucas02/GitHub/pucas-dots/quickshell/bar/cava.conf"]
+            command: ["cava", "-p", Quickshell.shellPath("bar/cava.conf")]
             running: panel.activePlayer !== null && panel.activePlayer.isPlaying
             stdout: SplitParser {
                 splitMarker: "\n"

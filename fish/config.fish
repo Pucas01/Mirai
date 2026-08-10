@@ -1,6 +1,6 @@
 if status is-interactive
     set -g fish_greeting
-    set -gx STARSHIP_CONFIG /home/pucas02/GitHub/pucas-dots/fish/starship.toml
+    set -gx STARSHIP_CONFIG (status dirname (status current-filename))/starship.toml
     starship init fish | source
 
     set -g fish_color_normal d0d0d0
@@ -25,7 +25,6 @@ if status is-interactive
     set -g fish_pager_color_selected_background --background=2a8a8a
 
     if status is-command-substitution
-        # skip
     else if not set -q FASTFETCH_SHOWN
         set -gx FASTFETCH_SHOWN 1
         ff

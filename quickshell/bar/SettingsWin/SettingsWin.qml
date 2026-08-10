@@ -14,12 +14,14 @@ Window {
 
     property alias audioSliderActive: audioSectionInstance.sliderActive
 
+    readonly property string homeDir: Quickshell.env("HOME")
+
     property string section: "wallpaper"
-    property string wallpaperDir: "/home/pucas02/Pictures/Mirai/Wallpapers"
+    property string wallpaperDir: settingsWin.homeDir + "/Pictures/Mirai/Wallpapers"
     property string appliedWallpaper: ""
 
-    property string pfpDir: "/home/pucas02/Pictures/Mirai/Avatars"
-    property string pfpStatePath: "/home/pucas02/.cache/qs-pfp-path"
+    property string pfpDir: settingsWin.homeDir + "/Pictures/Mirai/Avatars"
+    property string pfpStatePath: settingsWin.homeDir + "/.cache/qs-pfp-path"
     property string pfpPath: ""
 
     function setPfp(path) {
@@ -30,8 +32,8 @@ Window {
     }
 
     readonly property string defaultStartIcon: "󰣇"
-    property string startIconDir: "/home/pucas02/Pictures/Mirai/StartIcon"
-    property string startIconStatePath: "/home/pucas02/.cache/qs-start-icon-path"
+    property string startIconDir: settingsWin.homeDir + "/Pictures/Mirai/StartIcon"
+    property string startIconStatePath: settingsWin.homeDir + "/.cache/qs-start-icon-path"
     property string startIconPath: ""
 
     function setStartIconImage(path) {
@@ -41,7 +43,7 @@ Window {
         saveStartIconProc.running = true
     }
 
-    property string monitorsLuaPath: "/home/pucas02/.config/hypr/monitors.lua"
+    property string monitorsLuaPath: settingsWin.homeDir + "/.config/hypr/monitors.lua"
     property var monitors: []
     property bool monitorsRefreshed: false
     property bool monitorsApplied: false

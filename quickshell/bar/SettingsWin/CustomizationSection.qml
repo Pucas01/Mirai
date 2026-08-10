@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import Qt.labs.folderlistmodel
 
@@ -25,8 +26,9 @@ Item {
         startIconModel.folder = Qt.binding(function() { return "file://" + settingsWin.startIconDir })
     }
 
-    property string logoDir: "/home/pucas02/Pictures/Mirai/Logos"
-    property string logoStatePath: "/home/pucas02/.cache/qs-fastfetch-logo-path"
+    readonly property string homeDir: Quickshell.env("HOME")
+    property string logoDir: customizationSection.homeDir + "/Pictures/Mirai/Logos"
+    property string logoStatePath: customizationSection.homeDir + "/.cache/qs-fastfetch-logo-path"
     property string logoPath: ""
 
     function setLogo(path) {
