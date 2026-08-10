@@ -10,8 +10,6 @@ cd Mirai
 ./install.sh
 ```
 Missing features:
-- battery stuff
-- power profiles
 - being able to change the teal color :p
 
 Plannes stuff:

@@ -24,6 +24,8 @@ Variants {
 
         property var hyprMonitor: Hyprland.monitorFor(modelData)
         property var screenWorkspaces: Hyprland.workspaces.values.filter(w => w.monitor === hyprMonitor)
+        property bool isNarrow: panel.width < 1500
+        property bool isVeryNarrow: panel.width < 1250
         property var preferredPlayer: null
         property var activePlayer: {
             var players = Mpris.players.values
@@ -140,6 +142,108 @@ Variants {
             var wsCenter = wsArea.mapToGlobal(wsArea.width / 2, 0)
             var barBottom = barBg.mapToGlobal(0, barBg.height)
             brightnessOsd.show(wsCenter.x - brightnessOsd.width / 2, barBottom.y + 8)
+        }
+
+        property bool batteryAvailable: false
+        property int batteryPercent: 100
+        property string batteryStatus: ""
+
+        function refreshBattery() {
+            batteryProc.running = false
+            batteryProc.running = true
+        }
+
+        Timer {
+            interval: 10000
+            running: true
+            repeat: true
+            triggeredOnStart: true
+            onTriggered: panel.refreshBattery()
+        }
+
+        Process {
+            id: batteryProc
+            command: ["bash", "-c", "cat /sys/class/power_supply/BAT*/uevent 2>/dev/null"]
+            onExited: code => { if (code !== 0) panel.batteryAvailable = false }
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    if (text.trim() === "") { panel.batteryAvailable = false; return }
+                    var capMatch = text.match(/POWER_SUPPLY_CAPACITY=(\d+)/)
+                    var statusMatch = text.match(/POWER_SUPPLY_STATUS=(\w+)/)
+                    if (!capMatch) { panel.batteryAvailable = false; return }
+                    panel.batteryAvailable = true
+                    panel.batteryPercent = parseInt(capMatch[1])
+                    panel.batteryStatus = statusMatch ? statusMatch[1] : ""
+                }
+            }
+        }
+
+        function batteryGlyph(percent, status) {
+            if (status === "Charging") return "󰂄"
+            if (percent >= 95) return "󰁹"
+            if (percent >= 80) return "󰂀"
+            if (percent >= 60) return "󰁿"
+            if (percent >= 40) return "󰁽"
+            if (percent >= 20) return "󰁻"
+            return "󰁺"
+        }
+
+        property bool powerProfilesAvailable: false
+        property string powerProfile: ""
+        property var powerProfilesList: []
+
+        function refreshPowerProfile() {
+            powerProfileGetProc.running = false
+            powerProfileGetProc.running = true
+        }
+
+        Timer {
+            interval: 10000
+            running: true
+            repeat: true
+            triggeredOnStart: true
+            onTriggered: panel.refreshPowerProfile()
+        }
+
+        Process {
+            id: powerProfileGetProc
+            command: ["powerprofilesctl", "list"]
+            onExited: code => { if (code !== 0) panel.powerProfilesAvailable = false }
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    var lines = text.split("\n")
+                    var profiles = []
+                    var active = ""
+                    for (var i = 0; i < lines.length; i++) {
+                        var line = lines[i]
+                        var m = line.match(/^(\*| ) ([A-Za-z0-9_-]+):\s*$/)
+                        if (!m) continue
+                        profiles.push(m[2])
+                        if (m[1] === "*") active = m[2]
+                    }
+                    if (profiles.length === 0) { panel.powerProfilesAvailable = false; return }
+                    panel.powerProfilesAvailable = true
+                    panel.powerProfilesList = profiles
+                    if (active !== "") panel.powerProfile = active
+                }
+            }
+        }
+
+        function setPowerProfile(name) {
+            panel.powerProfile = name
+            powerProfileSetProc.command = ["powerprofilesctl", "set", name]
+            powerProfileSetProc.running = false
+            powerProfileSetProc.running = true
+        }
+
+        Process {
+            id: powerProfileSetProc
+        }
+
+        function powerProfileGlyph(name) {
+            if (name === "performance") return "󰓅"
+            if (name === "power-saver") return "󰌪"
+            return "󰗑"
         }
 
         property bool weatherLoaded: false
@@ -348,6 +452,17 @@ Variants {
             id: brightnessPopup
             brightness: panel.brightness
             onMoved: v => panel.setBrightness(v)
+        }
+
+        BatteryPopup {
+            id: batteryPopup
+            percent: panel.batteryPercent
+            status: panel.batteryStatus
+            profilesAvailable: panel.powerProfilesAvailable
+            profiles: panel.powerProfilesList
+            activeProfile: panel.powerProfile
+            glyphFn: panel.powerProfileGlyph
+            onProfileSelected: name => panel.setPowerProfile(name)
         }
 
         NetworkPopup {
@@ -638,6 +753,93 @@ Variants {
                 }
 
                 Item {
+                    id: batteryItem
+                    visible: panel.batteryAvailable
+                    width: panel.batteryAvailable ? batteryRow.width + 16 : 0
+                    height: 30
+                    anchors.verticalCenter: parent.verticalCenter
+                    clip: true
+                    Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+
+                    Canvas {
+                        id: batteryCanvas
+                        anchors.fill: parent
+                        property real hoverProgress: 0.0
+                        Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                        onHoverProgressChanged: requestPaint()
+                        onWidthChanged: requestPaint()
+                        onHeightChanged: requestPaint()
+                        onPaint: {
+                            var ctx = getContext("2d")
+                            ctx.clearRect(0, 0, width, height)
+                            var cut = 5, w = width, h = height, hp = hoverProgress
+                            function drawShape() {
+                                ctx.beginPath()
+                                ctx.moveTo(cut, 0); ctx.lineTo(w, 0)
+                                ctx.lineTo(w, h - cut); ctx.lineTo(w - cut, h)
+                                ctx.lineTo(0, h); ctx.lineTo(0, cut); ctx.closePath()
+                            }
+                            drawShape()
+                            var base = ctx.createLinearGradient(0, 0, 0, h)
+                            base.addColorStop(0, "#3d3d3d"); base.addColorStop(0.08, "#2a2a2a")
+                            base.addColorStop(0.5, "#303030"); base.addColorStop(1.0, "#3a3a3a")
+                            ctx.fillStyle = base; ctx.fill()
+                            if (hp > 0) {
+                                drawShape()
+                                var teal = ctx.createLinearGradient(0, 0, 0, h)
+                                teal.addColorStop(0, "#80e0e0"); teal.addColorStop(0.08, "#39c5bb")
+                                teal.addColorStop(0.5, "#2a8a8a"); teal.addColorStop(1.0, "#3a6a6a")
+                                ctx.globalAlpha = hp; ctx.fillStyle = teal; ctx.fill(); ctx.globalAlpha = 1.0
+                            }
+                            ctx.beginPath()
+                            ctx.moveTo(cut, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h * 0.62)
+                            ctx.lineTo(0, h * 0.62); ctx.lineTo(0, cut); ctx.closePath()
+                            var gloss = ctx.createLinearGradient(0, 0, 0, h * 0.62)
+                            gloss.addColorStop(0, "rgba(255,255,255," + (0.12 + hp * 0.2) + ")")
+                            gloss.addColorStop(1, "rgba(255,255,255,0.00)")
+                            ctx.fillStyle = gloss; ctx.fill()
+                            ctx.beginPath(); ctx.moveTo(cut, 0.5); ctx.lineTo(w, 0.5)
+                            ctx.strokeStyle = hp > 0.5 ? "#c0f4f4" : "#646464"; ctx.lineWidth = 1; ctx.stroke()
+                        }
+                    }
+
+                    Row {
+                        id: batteryRow
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: panel.batteryGlyph(panel.batteryPercent, panel.batteryStatus)
+                            color: panel.batteryStatus === "Charging" ? "#39c5bb" : (panel.batteryPercent <= 15 ? "#ff6b6b" : (batteryMouseArea.containsMouse ? "#ffffff" : "#888888"))
+                            font.pixelSize: 14
+                            Behavior on color { ColorAnimation { duration: 130 } }
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: !panel.isNarrow
+                            text: panel.batteryPercent + "%"
+                            color: batteryMouseArea.containsMouse ? "#ffffff" : "#999999"
+                            font.pixelSize: 11; font.family: "monospace"
+                            Behavior on color { ColorAnimation { duration: 130 } }
+                        }
+                    }
+
+                    MouseArea {
+                        id: batteryMouseArea
+                        anchors.fill: parent; hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onContainsMouseChanged: batteryCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                        onClicked: {
+                            var center = mapToGlobal(width / 2, 0)
+                            var barBottom = barBg.mapToGlobal(0, barBg.height)
+                            batteryPopup.open(center.x - batteryPopup.width / 2, barBottom.y + 6)
+                        }
+                    }
+                }
+
+                Item {
                     id: bellItem
                     width: 35; height: 30
                     anchors.verticalCenter: parent.verticalCenter
@@ -778,45 +980,27 @@ Variants {
                     }
                 }
 
-                Row {
+                Column {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 0
 
                     Text {
-                        id: dateText
-                        anchors.verticalCenter: parent.verticalCenter
-                        color: "#777777"
-                        font.pixelSize: 15
+                        id: clockText
+                        anchors.right: parent.right
+                        color: "#d0d0d0"
+                        font.pixelSize: 14
                         font.family: "monospace"
-                        text: Qt.formatDateTime(new Date(), "ddd dd MMM")
-                    }
-
-                    Item {
-                        width: 16
-                        height: 30
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        Rectangle {
-                            anchors.centerIn: parent
-                            width: 1
-                            height: parent.height * 0.7
-                            gradient: Gradient {
-                                orientation: Gradient.Vertical
-                                GradientStop { position: 0.0; color: "#00404040" }
-                                GradientStop { position: 0.4; color: "#804a4a4a" }
-                                GradientStop { position: 0.6; color: "#804a4a4a" }
-                                GradientStop { position: 1.0; color: "#00404040" }
-                            }
-                        }
+                        text: Qt.formatDateTime(new Date(), "hh:mm:ss")
                     }
 
                     Text {
-                        id: clockText
-                        anchors.verticalCenter: parent.verticalCenter
-                        color: "#d0d0d0"
-                        font.pixelSize: 15
+                        id: dateText
+                        visible: !panel.isNarrow
+                        anchors.right: parent.right
+                        color: "#777777"
+                        font.pixelSize: 10
                         font.family: "monospace"
-                        text: Qt.formatDateTime(new Date(), "hh:mm:ss")
+                        text: Qt.formatDateTime(new Date(), "ddd dd MMM")
                     }
 
                     Timer {
@@ -835,7 +1019,7 @@ Variants {
             Item {
                 id: weatherItem
                 anchors { left: wsArea.right; verticalCenter: parent.verticalCenter; leftMargin: 10 }
-                visible: panel.weatherLoaded
+                visible: panel.weatherLoaded && !panel.isNarrow
                 width: visible ? weatherRow.width + 20 : 0
                 height: 30
 
@@ -922,7 +1106,8 @@ Variants {
             Item {
                 id: colorPickerItem
                 anchors { left: weatherItem.right; verticalCenter: parent.verticalCenter; leftMargin: 10 }
-                width: panel.lastPickedColor !== "" ? colorPickerRow.width + 20 : 34
+                visible: !panel.isVeryNarrow
+                width: visible ? (panel.lastPickedColor !== "" ? colorPickerRow.width + 20 : 34) : 0
                 height: 30
 
                 Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
