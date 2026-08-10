@@ -26,8 +26,8 @@ hl.bind(mainMod .. " + down",  hl.dsp.focus({ direction = "down" }), { descripti
 hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"), { description = "Toggle scratchpad workspace" })
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd([[bash -c 'f=/tmp/.qs_screenshot.png && grim -g "$(slurp)" "$f" && notify-send -a "qs-screenshot" "Screenshot" "$f"']]), { description = "Screenshot selection" })
 
-hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e+1" }), { description = "Next workspace (scroll)" })
-hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }), { description = "Previous workspace (scroll)" })
+hl.bind(mainMod .. " + mouse_up", hl.dsp.focus({ workspace = "e+1" }), { description = "Next workspace (scroll)" })
+hl.bind(mainMod .. " + mouse_down",   hl.dsp.focus({ workspace = "e-1" }), { description = "Previous workspace (scroll)" })
 
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true, description = "Drag window" })
 hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true, description = "Resize window" })
