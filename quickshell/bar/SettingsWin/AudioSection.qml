@@ -155,185 +155,163 @@ Item {
         Column {
             id: audioContent
             width: parent.width
-            spacing: 0
+            spacing: 12
+            topPadding: 4
+            leftPadding: 16
+            rightPadding: 16
+            bottomPadding: 16
 
-            Item {
-                width: parent.width
-                height: 26
-                Text {
-                    anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
-                    text: "output device"
-                    color: "#666666"
-                    font.pixelSize: 10; font.family: "monospace"
-                }
-            }
+            SectionCard {
+                title: "output device"
 
-            Column {
-                width: parent.width
-                Repeater {
-                    model: audioSection.outputDevices
-                    delegate: DeviceRow {
-                        required property var modelData
-                        node: modelData
-                        active: Pipewire.defaultAudioSink === modelData
-                        onSelected: Pipewire.preferredDefaultAudioSink = modelData
-                    }
-                }
-            }
-
-            Item {
-                width: parent.width
-                height: 40
-                visible: Pipewire.defaultAudioSink !== null
-
-                MuteBtn {
-                    anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 12 }
-                    muted: Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio ? Pipewire.defaultAudioSink.audio.muted : false
-                    onToggled: if (Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio) Pipewire.defaultAudioSink.audio.muted = !Pipewire.defaultAudioSink.audio.muted
-                }
-
-                VolumeSlider {
-                    anchors { left: parent.left; right: outputPctText.left; verticalCenter: parent.verticalCenter; leftMargin: 44; rightMargin: 10 }
-                    value: Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio ? Pipewire.defaultAudioSink.audio.volume : 0
-                    muted: Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio ? Pipewire.defaultAudioSink.audio.muted : false
-                    onMoved: v => { if (Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio) Pipewire.defaultAudioSink.audio.volume = v }
-                }
-
-                Text {
-                    id: outputPctText
-                    anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 16 }
-                    width: 34
-                    horizontalAlignment: Text.AlignRight
-                    text: Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio ? Math.round(Pipewire.defaultAudioSink.audio.volume * 100) + "%" : "--"
-                    color: "#999999"
-                    font.pixelSize: 10; font.family: "monospace"
-                }
-            }
-
-            Rectangle { width: parent.width; height: 1; color: "#2a2a2a" }
-
-            Item {
-                width: parent.width
-                height: 26
-                Text {
-                    anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
-                    text: "input device"
-                    color: "#666666"
-                    font.pixelSize: 10; font.family: "monospace"
-                }
-            }
-
-            Column {
-                width: parent.width
-                Repeater {
-                    model: audioSection.inputDevices
-                    delegate: DeviceRow {
-                        required property var modelData
-                        node: modelData
-                        active: Pipewire.defaultAudioSource === modelData
-                        onSelected: Pipewire.preferredDefaultAudioSource = modelData
-                    }
-                }
-            }
-
-            Item {
-                width: parent.width
-                height: 40
-                visible: Pipewire.defaultAudioSource !== null
-
-                MuteBtn {
-                    anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 12 }
-                    muted: Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio ? Pipewire.defaultAudioSource.audio.muted : false
-                    onToggled: if (Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio) Pipewire.defaultAudioSource.audio.muted = !Pipewire.defaultAudioSource.audio.muted
-                }
-
-                VolumeSlider {
-                    anchors { left: parent.left; right: inputPctText.left; verticalCenter: parent.verticalCenter; leftMargin: 44; rightMargin: 10 }
-                    value: Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio ? Pipewire.defaultAudioSource.audio.volume : 0
-                    muted: Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio ? Pipewire.defaultAudioSource.audio.muted : false
-                    onMoved: v => { if (Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio) Pipewire.defaultAudioSource.audio.volume = v }
-                }
-
-                Text {
-                    id: inputPctText
-                    anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 16 }
-                    width: 34
-                    horizontalAlignment: Text.AlignRight
-                    text: Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio ? Math.round(Pipewire.defaultAudioSource.audio.volume * 100) + "%" : "--"
-                    color: "#999999"
-                    font.pixelSize: 10; font.family: "monospace"
-                }
-            }
-
-            Rectangle { width: parent.width; height: 1; color: "#2a2a2a" }
-
-            Item {
-                width: parent.width
-                height: 26
-                Text {
-                    anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
-                    text: "applications"
-                    color: "#666666"
-                    font.pixelSize: 10; font.family: "monospace"
-                }
-            }
-
-            Column {
-                width: parent.width
-                spacing: 2
-
-                Repeater {
-                    model: audioSection.playbackStreams
-                    delegate: Item {
-                        id: streamRow
-                        required property var modelData
-                        width: parent ? parent.width : 0
-                        height: 40
-
-                        Text {
-                            anchors { left: parent.left; top: parent.top; leftMargin: 16; topMargin: 2; right: parent.right; rightMargin: 16 }
-                            text: streamRow.modelData.properties["application.name"] || streamRow.modelData.description || streamRow.modelData.name
-                            color: "#cccccc"
-                            font.pixelSize: 10; font.family: "monospace"
-                            elide: Text.ElideRight
-                        }
-
-                        MuteBtn {
-                            anchors { left: parent.left; bottom: parent.bottom; leftMargin: 12; bottomMargin: 2 }
-                            width: 22; height: 18
-                            muted: streamRow.modelData.audio ? streamRow.modelData.audio.muted : false
-                            onToggled: if (streamRow.modelData.audio) streamRow.modelData.audio.muted = !streamRow.modelData.audio.muted
-                        }
-
-                        VolumeSlider {
-                            anchors { left: parent.left; right: parent.right; bottom: parent.bottom; leftMargin: 40; rightMargin: 46; bottomMargin: 4 }
-                            value: streamRow.modelData.audio ? streamRow.modelData.audio.volume : 0
-                            muted: streamRow.modelData.audio ? streamRow.modelData.audio.muted : false
-                            onMoved: v => { if (streamRow.modelData.audio) streamRow.modelData.audio.volume = v }
-                        }
-
-                        Text {
-                            anchors { right: parent.right; bottom: parent.bottom; rightMargin: 16; bottomMargin: 4 }
-                            width: 34
-                            horizontalAlignment: Text.AlignRight
-                            text: streamRow.modelData.audio ? Math.round(streamRow.modelData.audio.volume * 100) + "%" : "--"
-                            color: "#666666"
-                            font.pixelSize: 9; font.family: "monospace"
+                Column {
+                    width: parent.width
+                    Repeater {
+                        model: audioSection.outputDevices
+                        delegate: DeviceRow {
+                            required property var modelData
+                            node: modelData
+                            active: Pipewire.defaultAudioSink === modelData
+                            onSelected: Pipewire.preferredDefaultAudioSink = modelData
                         }
                     }
                 }
 
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    visible: audioSection.playbackStreams.length === 0
-                    text: "nothing playing"
-                    color: "#444444"
-                    font.pixelSize: 10; font.family: "monospace"
-                    topPadding: 10
+                Item {
+                    width: parent.width
+                    height: 40
+                    visible: Pipewire.defaultAudioSink !== null
+
+                    MuteBtn {
+                        anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 12 }
+                        muted: Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio ? Pipewire.defaultAudioSink.audio.muted : false
+                        onToggled: if (Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio) Pipewire.defaultAudioSink.audio.muted = !Pipewire.defaultAudioSink.audio.muted
+                    }
+
+                    VolumeSlider {
+                        anchors { left: parent.left; right: outputPctText.left; verticalCenter: parent.verticalCenter; leftMargin: 44; rightMargin: 10 }
+                        value: Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio ? Pipewire.defaultAudioSink.audio.volume : 0
+                        muted: Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio ? Pipewire.defaultAudioSink.audio.muted : false
+                        onMoved: v => { if (Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio) Pipewire.defaultAudioSink.audio.volume = v }
+                    }
+
+                    Text {
+                        id: outputPctText
+                        anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 16 }
+                        width: 34
+                        horizontalAlignment: Text.AlignRight
+                        text: Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio ? Math.round(Pipewire.defaultAudioSink.audio.volume * 100) + "%" : "--"
+                        color: "#999999"
+                        font.pixelSize: 10; font.family: "monospace"
+                    }
                 }
             }
 
-            Item { width: parent.width; height: 16 }
+            SectionCard {
+                title: "input device"
+
+                Column {
+                    width: parent.width
+                    Repeater {
+                        model: audioSection.inputDevices
+                        delegate: DeviceRow {
+                            required property var modelData
+                            node: modelData
+                            active: Pipewire.defaultAudioSource === modelData
+                            onSelected: Pipewire.preferredDefaultAudioSource = modelData
+                        }
+                    }
+                }
+
+                Item {
+                    width: parent.width
+                    height: 40
+                    visible: Pipewire.defaultAudioSource !== null
+
+                    MuteBtn {
+                        anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 12 }
+                        muted: Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio ? Pipewire.defaultAudioSource.audio.muted : false
+                        onToggled: if (Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio) Pipewire.defaultAudioSource.audio.muted = !Pipewire.defaultAudioSource.audio.muted
+                    }
+
+                    VolumeSlider {
+                        anchors { left: parent.left; right: inputPctText.left; verticalCenter: parent.verticalCenter; leftMargin: 44; rightMargin: 10 }
+                        value: Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio ? Pipewire.defaultAudioSource.audio.volume : 0
+                        muted: Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio ? Pipewire.defaultAudioSource.audio.muted : false
+                        onMoved: v => { if (Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio) Pipewire.defaultAudioSource.audio.volume = v }
+                    }
+
+                    Text {
+                        id: inputPctText
+                        anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 16 }
+                        width: 34
+                        horizontalAlignment: Text.AlignRight
+                        text: Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio ? Math.round(Pipewire.defaultAudioSource.audio.volume * 100) + "%" : "--"
+                        color: "#999999"
+                        font.pixelSize: 10; font.family: "monospace"
+                    }
+                }
+            }
+
+            SectionCard {
+                title: "applications"
+
+                Column {
+                    width: parent.width
+                    spacing: 2
+
+                    Repeater {
+                        model: audioSection.playbackStreams
+                        delegate: Item {
+                            id: streamRow
+                            required property var modelData
+                            width: parent ? parent.width : 0
+                            height: 40
+
+                            Text {
+                                anchors { left: parent.left; top: parent.top; leftMargin: 16; topMargin: 2; right: parent.right; rightMargin: 16 }
+                                text: streamRow.modelData.properties["application.name"] || streamRow.modelData.description || streamRow.modelData.name
+                                color: "#cccccc"
+                                font.pixelSize: 10; font.family: "monospace"
+                                elide: Text.ElideRight
+                            }
+
+                            MuteBtn {
+                                anchors { left: parent.left; bottom: parent.bottom; leftMargin: 12; bottomMargin: 2 }
+                                width: 22; height: 18
+                                muted: streamRow.modelData.audio ? streamRow.modelData.audio.muted : false
+                                onToggled: if (streamRow.modelData.audio) streamRow.modelData.audio.muted = !streamRow.modelData.audio.muted
+                            }
+
+                            VolumeSlider {
+                                anchors { left: parent.left; right: parent.right; bottom: parent.bottom; leftMargin: 40; rightMargin: 46; bottomMargin: 4 }
+                                value: streamRow.modelData.audio ? streamRow.modelData.audio.volume : 0
+                                muted: streamRow.modelData.audio ? streamRow.modelData.audio.muted : false
+                                onMoved: v => { if (streamRow.modelData.audio) streamRow.modelData.audio.volume = v }
+                            }
+
+                            Text {
+                                anchors { right: parent.right; bottom: parent.bottom; rightMargin: 16; bottomMargin: 4 }
+                                width: 34
+                                horizontalAlignment: Text.AlignRight
+                                text: streamRow.modelData.audio ? Math.round(streamRow.modelData.audio.volume * 100) + "%" : "--"
+                                color: "#666666"
+                                font.pixelSize: 9; font.family: "monospace"
+                            }
+                        }
+                    }
+
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible: audioSection.playbackStreams.length === 0
+                        text: "nothing playing"
+                        color: "#444444"
+                        font.pixelSize: 10; font.family: "monospace"
+                        topPadding: 10
+                        bottomPadding: 6
+                    }
+                }
+            }
         }
     }
 }

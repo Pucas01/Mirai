@@ -135,10 +135,9 @@ Window {
         function hide(): void { launcherWin.closeLauncher() }
     }
 
-    Rectangle {
+    PanelBackground {
         id: launcherRect
         anchors.fill: parent
-        color: "#1a1a1a"
 
         Column {
             anchors.fill: parent

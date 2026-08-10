@@ -120,12 +120,9 @@ Window {
         function hide(): void { keybindsWin.close() }
     }
 
-    Rectangle {
+    PanelBackground {
         id: keybindsRect
         anchors.fill: parent
-        color: "#1a1a1a"
-        border.color: "#39c5bb"
-        border.width: 1
 
         Column {
             anchors { fill: parent; margins: 1 }

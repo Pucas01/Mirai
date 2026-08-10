@@ -149,124 +149,122 @@ Item {
         Column {
             id: btContent
             width: parent.width
-            spacing: 0
+            spacing: 12
+            topPadding: 4
+            leftPadding: 16
+            rightPadding: 16
+            bottomPadding: 16
 
-            Item {
-                width: parent.width
-                height: 34
+            SectionCard {
+                title: "devices"
 
-                Text {
-                    anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
-                    text: "devices"
-                    color: "#666666"
-                    font.pixelSize: 10; font.family: "monospace"
-                }
-
-                ActBtn {
-                    anchors { right: parent.right; top: parent.top; rightMargin: 16; topMargin: 8 }
+                headerAction: ActBtn {
                     label: bluetoothSection.adapter && bluetoothSection.adapter.discovering ? "scanning..." : "scan"
                     active: bluetoothSection.adapter && bluetoothSection.adapter.discovering
                     onClicked: if (bluetoothSection.adapter) bluetoothSection.adapter.discovering = !bluetoothSection.adapter.discovering
                 }
-            }
 
-            Repeater {
-                model: bluetoothSection.devices
-                delegate: Item {
-                    id: btRow
-                    required property var modelData
-                    width: parent ? parent.width : 0
-                    height: 54
+                Column {
+                    width: parent.width
 
-                    Rectangle {
-                        anchors.fill: parent
-                        color: btRowArea.containsMouse ? "#242424" : "transparent"
-                        Behavior on color { ColorAnimation { duration: 80 } }
-                    }
+                    Repeater {
+                        model: bluetoothSection.devices
+                        delegate: Item {
+                            id: btRow
+                            required property var modelData
+                            width: parent ? parent.width : 0
+                            height: 54
 
-                    MouseArea {
-                        id: btRowArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                    }
+                            Rectangle {
+                                anchors.fill: parent
+                                color: btRowArea.containsMouse ? "#242424" : "transparent"
+                                Behavior on color { ColorAnimation { duration: 80 } }
+                            }
 
-                    Connections {
-                        target: btRow.modelData
-                        function onPairedChanged() {
-                            if (btRow.modelData.paired) {
-                                btRow.modelData.trusted = true
-                                if (!btRow.modelData.connected) btRow.modelData.connect()
+                            MouseArea {
+                                id: btRowArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                            }
+
+                            Connections {
+                                target: btRow.modelData
+                                function onPairedChanged() {
+                                    if (btRow.modelData.paired) {
+                                        btRow.modelData.trusted = true
+                                        if (!btRow.modelData.connected) btRow.modelData.connect()
+                                    }
+                                }
+                            }
+
+                            Text {
+                                anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
+                                text: btRow.modelData.connected ? "󰂱" : "󰂯"
+                                color: btRow.modelData.connected ? "#39c5bb" : "#666666"
+                                font.pixelSize: 16
+                            }
+
+                            Column {
+                                anchors { left: parent.left; right: btActions.left; verticalCenter: parent.verticalCenter; leftMargin: 42; rightMargin: 10 }
+                                spacing: 2
+
+                                Text {
+                                    width: parent.width
+                                    text: btRow.modelData.name || btRow.modelData.deviceName
+                                    color: "#cccccc"
+                                    font.pixelSize: 11; font.family: "monospace"
+                                    elide: Text.ElideRight
+                                }
+
+                                Text {
+                                    width: parent.width
+                                    text: {
+                                        if (btRow.modelData.pairing) return "pairing..."
+                                        if (btRow.modelData.connected) return btRow.modelData.batteryAvailable ? "connected · " + Math.round(btRow.modelData.battery * 100) + "%" : "connected"
+                                        if (btRow.modelData.paired) return "paired"
+                                        return "available"
+                                    }
+                                    color: "#666666"
+                                    font.pixelSize: 9; font.family: "monospace"
+                                }
+                            }
+
+                            Row {
+                                id: btActions
+                                anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 12 }
+                                spacing: 6
+
+                                ActBtn {
+                                    label: btRow.modelData.pairing ? "..." : (btRow.modelData.connected ? "disconnect" : (btRow.modelData.paired ? "connect" : "pair"))
+                                    width: 76
+                                    onClicked: {
+                                        if (btRow.modelData.connected) btRow.modelData.disconnect()
+                                        else if (btRow.modelData.paired) btRow.modelData.connect()
+                                        else btRow.modelData.pair()
+                                    }
+                                }
+
+                                ActBtn {
+                                    visible: btRow.modelData.paired
+                                    label: "forget"
+                                    width: 56
+                                    onClicked: btRow.modelData.forget()
+                                }
                             }
                         }
                     }
 
                     Text {
-                        anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
-                        text: btRow.modelData.connected ? "󰂱" : "󰂯"
-                        color: btRow.modelData.connected ? "#39c5bb" : "#666666"
-                        font.pixelSize: 16
-                    }
-
-                    Column {
-                        anchors { left: parent.left; right: btActions.left; verticalCenter: parent.verticalCenter; leftMargin: 42; rightMargin: 10 }
-                        spacing: 2
-
-                        Text {
-                            width: parent.width
-                            text: btRow.modelData.name || btRow.modelData.deviceName
-                            color: "#cccccc"
-                            font.pixelSize: 11; font.family: "monospace"
-                            elide: Text.ElideRight
-                        }
-
-                        Text {
-                            width: parent.width
-                            text: {
-                                if (btRow.modelData.pairing) return "pairing..."
-                                if (btRow.modelData.connected) return btRow.modelData.batteryAvailable ? "connected · " + Math.round(btRow.modelData.battery * 100) + "%" : "connected"
-                                if (btRow.modelData.paired) return "paired"
-                                return "available"
-                            }
-                            color: "#666666"
-                            font.pixelSize: 9; font.family: "monospace"
-                        }
-                    }
-
-                    Row {
-                        id: btActions
-                        anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 12 }
-                        spacing: 6
-
-                        ActBtn {
-                            label: btRow.modelData.pairing ? "..." : (btRow.modelData.connected ? "disconnect" : (btRow.modelData.paired ? "connect" : "pair"))
-                            width: 76
-                            onClicked: {
-                                if (btRow.modelData.connected) btRow.modelData.disconnect()
-                                else if (btRow.modelData.paired) btRow.modelData.connect()
-                                else btRow.modelData.pair()
-                            }
-                        }
-
-                        ActBtn {
-                            visible: btRow.modelData.paired
-                            label: "forget"
-                            width: 56
-                            onClicked: btRow.modelData.forget()
-                        }
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible: bluetoothSection.devices.length === 0
+                        text: "no devices found"
+                        color: "#444444"
+                        font.pixelSize: 11; font.family: "monospace"
+                        topPadding: 20
+                        bottomPadding: 12
                     }
                 }
             }
-
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: bluetoothSection.devices.length === 0
-                text: "no devices found"
-                color: "#444444"
-                font.pixelSize: 11; font.family: "monospace"
-                topPadding: 20
-            }
-
-            Item { width: parent.width; height: 16 }
         }
     }
 

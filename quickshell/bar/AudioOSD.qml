@@ -27,21 +27,10 @@ Window {
     Timer { id: osdAutoClose; interval: 1400; onTriggered: { audioOsd.isOpen = false; osdHideTimer.start() } }
     Timer { id: osdHideTimer; interval: 220; onTriggered: audioOsd.visible = false }
 
-    Rectangle {
+    PanelBackground {
         id: osdRect
         anchors.fill: parent
         clip: true
-
-        gradient: Gradient {
-            orientation: Gradient.Vertical
-            GradientStop { position: 0.0;  color: "#3d3d3d" }
-            GradientStop { position: 0.08; color: "#2c2c2c" }
-            GradientStop { position: 0.5;  color: "#232323" }
-            GradientStop { position: 1.0;  color: "#181818" }
-        }
-
-        border.color: "#39c5bb"
-        border.width: 1
 
         opacity: audioOsd.isOpen ? 1.0 : 0.0
         Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
@@ -56,17 +45,6 @@ Window {
             Scale { origin.x: osdRect.width / 2; origin.y: 0; xScale: osdRect.scaleVal; yScale: osdRect.scaleVal },
             Translate { y: osdRect.slideY }
         ]
-
-        Rectangle {
-            anchors { left: parent.left; right: parent.right; top: parent.top }
-            anchors.topMargin: 1
-            height: 4
-            gradient: Gradient {
-                orientation: Gradient.Vertical
-                GradientStop { position: 0.0; color: "#50505050" }
-                GradientStop { position: 1.0; color: "#00000000" }
-            }
-        }
 
         Row {
             anchors { fill: parent; margins: 14 }

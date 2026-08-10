@@ -65,12 +65,9 @@ Window {
         return m + ":" + (s < 10 ? "0" : "") + s
     }
 
-    Rectangle {
+    PanelBackground {
         id: mediaRect
         anchors.fill: parent
-        color: "#1a1a1a"
-        border.color: "#39c5bb"
-        border.width: 1
 
         opacity: mediaPopup.isOpen ? 1.0 : 0.0
         Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }

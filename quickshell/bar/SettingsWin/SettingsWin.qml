@@ -8,8 +8,8 @@ Window {
     flags: Qt.Window | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint
     title: "qs-settings"
     color: "transparent"
-    width: 720
-    height: 500
+    width: 920
+    height: 640
     visible: false
 
     property alias audioSliderActive: audioSectionInstance.sliderActive
@@ -42,6 +42,30 @@ Window {
         saveStartIconProc.running = false
         saveStartIconProc.running = true
     }
+
+    property string cursorTheme: "default"
+    property int cursorSize: 24
+    readonly property string cursorAppliedTheme: cursorTheme
+    property bool cursorApplied: false
+    property string cursorError: ""
+
+    function applyCursor(theme, size) {
+        settingsWin.cursorTheme = theme
+        settingsWin.cursorSize = size
+        applyCursorProc.command = ["hyprctl", "setcursor", theme, String(size)]
+        applyCursorProc.running = false
+        applyCursorProc.running = true
+        writeCursorEnvProc.command = ["bash", settingsWin.homeDir + "/.config/hypr/scripts/set-cursor.sh", theme, String(size)]
+        writeCursorEnvProc.running = false
+        writeCursorEnvProc.running = true
+        saveCursorStateProc.command = ["bash", "-c", "mkdir -p ~/.cache && printf '%s\\n%s\\n' \"" + theme + "\" \"" + size + "\" > \"" + settingsWin.cursorStatePath + "\""]
+        saveCursorStateProc.running = false
+        saveCursorStateProc.running = true
+    }
+
+    property string cursorStatePath: settingsWin.homeDir + "/.cache/qs-cursor-state"
+    property string cursorThemesDir: "/usr/share/icons"
+    property string cursorPreviewsDir: settingsWin.homeDir + "/.cache/mirai-cursor-previews"
 
     property string monitorsLuaPath: settingsWin.homeDir + "/.config/hypr/monitors.lua"
     property var monitors: []
@@ -107,13 +131,14 @@ Window {
             customizationSectionInstance.ensureDir()
             ensurePfpDirProc.running = false; ensurePfpDirProc.running = true
             ensureStartIconDirProc.running = false; ensureStartIconDirProc.running = true
+            genCursorPreviewsProc.running = false; genCursorPreviewsProc.running = true
             if (settingsWin.section === "monitors") settingsWin.refreshMonitors()
         }
     }
 
     onSectionChanged: if (section === "monitors") refreshMonitors()
 
-    Component.onCompleted: { loadPfpProc.running = true; loadStartIconProc.running = true }
+    Component.onCompleted: { loadPfpProc.running = true; loadStartIconProc.running = true; loadCursorProc.running = true }
 
     Process {
         id: floatProc
@@ -173,6 +198,71 @@ Window {
     Process {
         id: openStartIconDirProc
         command: ["nautilus", settingsWin.startIconDir]
+        running: false
+    }
+
+    Process {
+        id: loadCursorProc
+        command: ["cat", settingsWin.cursorStatePath]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var lines = text.trim().split("\n")
+                if (lines.length >= 1 && lines[0].length > 0) settingsWin.cursorTheme = lines[0].trim()
+                if (lines.length >= 2) {
+                    var n = parseInt(lines[1].trim(), 10)
+                    if (!isNaN(n) && n > 0) settingsWin.cursorSize = n
+                }
+            }
+        }
+    }
+
+    Process {
+        id: applyCursorProc
+        command: ["true"]
+        running: false
+        onExited: code => {
+            if (code === 0) {
+                settingsWin.cursorApplied = true
+                cursorAppliedTimer.start()
+            } else {
+                settingsWin.cursorError = "apply failed (exit " + code + ")"
+                cursorErrorTimer.start()
+            }
+        }
+    }
+
+    Process {
+        id: writeCursorEnvProc
+        command: ["true"]
+        running: false
+        onExited: code => {
+            if (code !== 0) {
+                settingsWin.cursorError = "save failed (exit " + code + ")"
+                cursorErrorTimer.start()
+            }
+        }
+    }
+
+    Process {
+        id: saveCursorStateProc
+        command: ["true"]
+        running: false
+    }
+
+    Timer { id: cursorAppliedTimer; interval: 1200; onTriggered: settingsWin.cursorApplied = false }
+    Timer { id: cursorErrorTimer; interval: 4000; onTriggered: settingsWin.cursorError = "" }
+
+    Process {
+        id: genCursorPreviewsProc
+        command: ["bash", settingsWin.homeDir + "/.config/hypr/scripts/gen-cursor-previews.sh"]
+        running: false
+        onExited: customizationSectionInstance.refreshCursorPreviews()
+    }
+
+    Process {
+        id: openCursorThemesDirProc
+        command: ["nautilus", settingsWin.cursorThemesDir]
         running: false
     }
 
@@ -239,9 +329,8 @@ Window {
         onToggleFinished: networkSectionInstance.refreshActive()
     }
 
-    Rectangle {
+    PanelBackground {
         anchors.fill: parent
-        color: "#1a1a1a"
 
         Item {
             id: titleBar

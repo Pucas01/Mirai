@@ -310,81 +310,76 @@ Item {
         Column {
             id: netContent
             width: parent.width
-            spacing: 0
+            spacing: 12
+            topPadding: 4
+            leftPadding: 16
+            rightPadding: 16
+            bottomPadding: 16
 
-            Item {
-                id: ethRow
-                width: parent.width
-                height: 54
+            SectionCard {
+                title: "ethernet"
 
-                Text {
-                    anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
-                    text: networkSection.ethernetConnected ? "󰈀" : "󰈂"
-                    color: networkSection.ethernetConnected ? "#39c5bb" : "#666666"
-                    font.pixelSize: 16
-                }
-
-                Column {
-                    anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 42 }
-                    spacing: 2
+                Item {
+                    id: ethRow
+                    width: parent.width
+                    height: 54
 
                     Text {
-                        text: "ethernet"
-                        color: "#cccccc"
-                        font.pixelSize: 11; font.family: "monospace"
+                        anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
+                        text: networkSection.ethernetConnected ? "󰈀" : "󰈂"
+                        color: networkSection.ethernetConnected ? "#39c5bb" : "#666666"
+                        font.pixelSize: 16
                     }
 
-                    Text {
-                        text: networkSection.ethernetConnected ? networkSection.ethernetName : "not connected"
-                        color: "#666666"
-                        font.pixelSize: 9; font.family: "monospace"
+                    Column {
+                        anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 42 }
+                        spacing: 2
+
+                        Text {
+                            text: networkSection.ethernetName !== "" ? networkSection.ethernetName : "not detected"
+                            color: "#cccccc"
+                            font.pixelSize: 11; font.family: "monospace"
+                        }
+
+                        Text {
+                            text: networkSection.ethernetConnected ? "connected" : "not connected"
+                            color: "#666666"
+                            font.pixelSize: 9; font.family: "monospace"
+                        }
                     }
-                }
 
-                Row {
-                    anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 16 }
-                    spacing: 8
+                    Row {
+                        anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 16 }
+                        spacing: 8
 
-                    NetActBtn {
-                        label: "edit"
-                        width: 52
-                        visible: networkSection.ethernetName !== ""
-                        onClicked: settingsWin.ethernetWin.open()
-                    }
+                        NetActBtn {
+                            label: "edit"
+                            width: 52
+                            visible: networkSection.ethernetName !== ""
+                            onClicked: settingsWin.ethernetWin.open()
+                        }
 
-                    NetToggle {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: networkSection.ethernetName !== ""
-                        checked: networkSection.ethernetConnected
-                        onToggled: {
-                            ethToggleProc.command = networkSection.ethernetConnected
-                                ? ["nmcli", "connection", "down", networkSection.ethernetName]
-                                : ["nmcli", "connection", "up", networkSection.ethernetName]
-                            ethToggleProc.running = false
-                            ethToggleProc.running = true
+                        NetToggle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: networkSection.ethernetName !== ""
+                            checked: networkSection.ethernetConnected
+                            onToggled: {
+                                ethToggleProc.command = networkSection.ethernetConnected
+                                    ? ["nmcli", "connection", "down", networkSection.ethernetName]
+                                    : ["nmcli", "connection", "up", networkSection.ethernetName]
+                                ethToggleProc.running = false
+                                ethToggleProc.running = true
+                            }
                         }
                     }
                 }
             }
 
-            Rectangle {
-                width: parent.width; height: 1; color: "#242424"
-            }
-
-            Item {
-                width: parent.width
-                height: 34
+            SectionCard {
+                title: "networks"
                 visible: networkSection.wifiPresent && networkSection.wifiEnabled
 
-                Text {
-                    anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 16 }
-                    text: "networks"
-                    color: "#666666"
-                    font.pixelSize: 10; font.family: "monospace"
-                }
-
-                NetActBtn {
-                    anchors { right: parent.right; top: parent.top; rightMargin: 16; topMargin: 8 }
+                headerAction: NetActBtn {
                     label: networkSection.scanning ? "scanning..." : "scan"
                     active: networkSection.scanning
                     onClicked: {
@@ -393,12 +388,11 @@ Item {
                         networkSection.refreshAps()
                     }
                 }
-            }
 
-            Repeater {
-                model: networkSection.wifiPresent && networkSection.wifiEnabled ? networkSection.wifiAps : []
-                delegate: Item {
-                    id: apRow
+                Repeater {
+                    model: networkSection.wifiPresent && networkSection.wifiEnabled ? networkSection.wifiAps : []
+                    delegate: Item {
+                        id: apRow
                     required property var modelData
                     width: parent ? parent.width : 0
                     height: networkSection.connectTarget === modelData.ssid ? 118 : 54
@@ -575,27 +569,28 @@ Item {
                         }
                     }
                 }
-            }
+                }
 
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: networkSection.wifiPresent && networkSection.wifiEnabled && networkSection.wifiAps.length === 0
-                text: "no networks found"
-                color: "#444444"
-                font.pixelSize: 11; font.family: "monospace"
-                topPadding: 20
-            }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    visible: networkSection.wifiPresent && networkSection.wifiEnabled && networkSection.wifiAps.length === 0
+                    text: "no networks found"
+                    color: "#444444"
+                    font.pixelSize: 11; font.family: "monospace"
+                    topPadding: 20
+                    bottomPadding: 12
+                }
 
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: networkSection.connectError !== ""
-                text: networkSection.connectError
-                color: "#ff6b6b"
-                font.pixelSize: 10; font.family: "monospace"
-                topPadding: 10
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    visible: networkSection.connectError !== ""
+                    text: networkSection.connectError
+                    color: "#ff6b6b"
+                    font.pixelSize: 10; font.family: "monospace"
+                    topPadding: 10
+                    bottomPadding: 10
+                }
             }
-
-            Item { width: parent.width; height: 16 }
         }
     }
 }

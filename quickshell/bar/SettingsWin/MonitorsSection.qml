@@ -1,4 +1,5 @@
 import QtQuick
+import ".."
 
 Item {
     id: monitorsSection
@@ -186,15 +187,12 @@ Item {
                 }
             }
 
-            Rectangle {
+            PanelBackground {
                 id: modeListBg
                 visible: modeDropdown.open && settingsWin.selectedMonitor !== null
                 anchors { top: parent.bottom; left: parent.left; topMargin: 4 }
                 width: 190
                 height: Math.min(200, modeListView.contentHeight + 8)
-                color: "#1a1a1a"
-                border.color: "#39c5bb"
-                border.width: 1
                 z: 100
 
                 ListView {

@@ -49,12 +49,9 @@ Window {
         menu: trayMenuWin.targetItem ? trayMenuWin.targetItem.menu : null
     }
 
-    Rectangle {
+    PanelBackground {
         id: menuRect
         anchors.fill: parent
-        color: "#cc1a1a1a"
-        border.color: "#39c5bb"
-        border.width: 1
 
         opacity: trayMenuWin.isOpen ? 1.0 : 0.0
         Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }

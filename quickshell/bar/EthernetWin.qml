@@ -246,11 +246,8 @@ Window {
         }
     }
 
-    Rectangle {
+    PanelBackground {
         anchors.fill: parent
-        color: "#1a1a1a"
-        border.color: "#39c5bb"
-        border.width: 1
 
         Item {
             id: ethTitleBar
