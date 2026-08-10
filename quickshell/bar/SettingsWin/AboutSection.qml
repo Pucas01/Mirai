@@ -188,6 +188,26 @@ Item {
                     color: "#555555"
                     font.pixelSize: 10; font.family: "monospace"
                 }
+
+                Text {
+                    id: checkNowText
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    visible: !aboutSection.settingsWin.updateApplying
+                    text: aboutSection.settingsWin.updateChecking ? "checking..." : "check for updates"
+                    color: aboutSection.settingsWin.updateChecking ? "#555555" : (checkNowArea.containsMouse ? "#80e0e0" : "#39c5bb")
+                    font.pixelSize: 9; font.family: "monospace"
+                    font.underline: !aboutSection.settingsWin.updateChecking && checkNowArea.containsMouse
+                    Behavior on color { ColorAnimation { duration: 100 } }
+
+                    MouseArea {
+                        id: checkNowArea
+                        anchors.fill: parent
+                        anchors.margins: -4
+                        hoverEnabled: true
+                        cursorShape: aboutSection.settingsWin.updateChecking ? Qt.ArrowCursor : Qt.PointingHandCursor
+                        onClicked: if (!aboutSection.settingsWin.updateChecking) aboutSection.settingsWin.checkForUpdate()
+                    }
+                }
             }
         }
     }
