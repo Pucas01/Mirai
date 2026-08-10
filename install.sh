@@ -38,8 +38,19 @@ link_one() {
         if [ -d "$dest" ] && [ -z "$(ls -A "$dest" 2>/dev/null)" ]; then
             rmdir "$dest"
         else
-            echo "warn: $dest already exists and isn't empty, leaving it alone"
-            return
+            local bak="${dest}.bak"
+            read -r -p "warn: $dest already exists, back it up to $bak and replace with symlink? [y/N] " reply
+            if [[ "$reply" =~ ^[Yy]$ ]]; then
+                if [ -e "$bak" ]; then
+                    echo "warn: $bak already exists too, leaving $2 alone"
+                    return
+                fi
+                mv "$dest" "$bak"
+                echo "ok:   backed up $2 -> $bak"
+            else
+                echo "skip: $2 (left existing files alone)"
+                return
+            fi
         fi
     fi
 
