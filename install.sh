@@ -62,9 +62,26 @@ for dir in Wallpapers Avatars StartIcon Logos; do
 done
 
 echo
+echo "== split-monitor-workspaces plugin =="
+PLUGIN_DIR="$REPO_DIR/hypr/plugins/split-monitor-workspaces"
+PLUGIN_URL="https://github.com/zjeffer/split-monitor-workspaces"
+if [ -d "$PLUGIN_DIR/.git" ]; then
+    echo "ok:   already cloned at $PLUGIN_DIR"
+elif [ -e "$PLUGIN_DIR" ]; then
+    echo "warn: $PLUGIN_DIR exists but isn't a git repo, leaving it alone"
+elif command -v git >/dev/null 2>&1; then
+    mkdir -p "$REPO_DIR/hypr/plugins"
+    git clone "$PLUGIN_URL" "$PLUGIN_DIR"
+    echo "ok:   cloned split-monitor-workspaces"
+else
+    echo "warn: git not found, clone this manually: $PLUGIN_URL -> $PLUGIN_DIR"
+fi
+
+echo
 echo "== checking dependencies =="
 
 DEP_PKGS=(
+    "git:git"
     "hyprctl:hyprland"
     "quickshell:quickshell"
     "kitty:kitty"
