@@ -13,8 +13,8 @@ Missing features:
 - being able to change the teal color :p
 
 Plannes stuff:
-Github integration
-Proxmox integration
-Docker integration
+- Github integration
+- Proxmox integration
+- Docker integration
 
 + More!
