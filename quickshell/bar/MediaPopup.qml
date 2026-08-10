@@ -49,6 +49,22 @@ Window {
     Timer { id: mediaOpenTimer; interval: 10; onTriggered: mediaPopup.isOpen = true }
     Timer { id: mediaCloseTimer; interval: 220; onTriggered: mediaPopup.visible = false }
 
+    property real livePosition: displayPlayer ? displayPlayer.position : 0
+    Timer {
+        interval: 500
+        running: mediaPopup.isOpen && mediaPopup.displayPlayer && mediaPopup.displayPlayer.isPlaying
+        repeat: true
+        onTriggered: mediaPopup.livePosition = mediaPopup.displayPlayer.position
+    }
+    onDisplayPlayerChanged: livePosition = displayPlayer ? displayPlayer.position : 0
+
+    function formatTime(sec) {
+        if (!sec || sec < 0 || isNaN(sec)) return "0:00"
+        var m = Math.floor(sec / 60)
+        var s = Math.floor(sec % 60)
+        return m + ":" + (s < 10 ? "0" : "") + s
+    }
+
     Rectangle {
         id: mediaRect
         anchors.fill: parent
@@ -138,6 +154,59 @@ Window {
                         font.pixelSize: 12
                         font.family: "monospace"
                         elide: Text.ElideRight
+                    }
+                }
+
+                Item {
+                    id: progressArea
+                    visible: mediaPopup.displayPlayer && mediaPopup.displayPlayer.length > 0
+                    anchors { left: parent.left; right: parent.right; top: parent.top; leftMargin: 14; rightMargin: 14; topMargin: 56 }
+                    height: 26
+
+                    Rectangle {
+                        id: progressTrack
+                        anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter }
+                        height: 4
+                        radius: 2
+                        color: "#2a2a2a"
+
+                        Rectangle {
+                            width: progressTrack.width * Math.max(0, Math.min(1, mediaPopup.displayPlayer && mediaPopup.displayPlayer.length > 0 ? mediaPopup.livePosition / mediaPopup.displayPlayer.length : 0))
+                            height: parent.height
+                            radius: parent.radius
+                            color: "#39c5bb"
+                            Behavior on width { NumberAnimation { duration: progressDragArea.pressed ? 0 : 400; easing.type: Easing.Linear } }
+                        }
+                    }
+
+                    MouseArea {
+                        id: progressDragArea
+                        anchors { fill: parent }
+                        enabled: mediaPopup.displayPlayer && mediaPopup.displayPlayer.canSeek
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        function seekToX(mx) {
+                            if (!mediaPopup.displayPlayer || mediaPopup.displayPlayer.length <= 0) return
+                            var frac = Math.max(0, Math.min(1, mx / width))
+                            var newPos = frac * mediaPopup.displayPlayer.length
+                            mediaPopup.displayPlayer.position = newPos
+                            mediaPopup.livePosition = newPos
+                        }
+                        onPressed: mouse => seekToX(mouse.x)
+                        onPositionChanged: mouse => { if (pressed) seekToX(mouse.x) }
+                    }
+
+                    Text {
+                        anchors { left: parent.left; top: progressTrack.bottom; topMargin: 4 }
+                        text: mediaPopup.formatTime(mediaPopup.livePosition)
+                        color: "#666666"
+                        font.pixelSize: 9; font.family: "monospace"
+                    }
+
+                    Text {
+                        anchors { right: parent.right; top: progressTrack.bottom; topMargin: 4 }
+                        text: mediaPopup.displayPlayer ? mediaPopup.formatTime(mediaPopup.displayPlayer.length) : "0:00"
+                        color: "#666666"
+                        font.pixelSize: 9; font.family: "monospace"
                     }
                 }
 

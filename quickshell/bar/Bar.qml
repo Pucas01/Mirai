@@ -212,6 +212,22 @@ Variants {
             }
         }
 
+        property var cavaBars: [0, 0, 0, 0, 0, 0, 0]
+
+        Process {
+            id: cavaProc
+            command: ["cava", "-p", "/home/pucas02/GitHub/pucas-dots/quickshell/bar/cava.conf"]
+            running: panel.activePlayer !== null && panel.activePlayer.isPlaying
+            stdout: SplitParser {
+                splitMarker: "\n"
+                onRead: data => {
+                    var parts = data.split(";").filter(function(s) { return s.trim() !== "" })
+                    if (parts.length === 0) return
+                    panel.cavaBars = parts.map(function(s) { return parseInt(s) || 0 })
+                }
+            }
+        }
+
         function showAudioOsd() {
             if (!panel.audioOsdArmed) return
             if (!panel.hyprMonitor || !panel.hyprMonitor.focused) return
@@ -857,6 +873,7 @@ Variants {
                     id: mediaWidget
                     width: mediaRow.width + 16
                     height: parent.height
+                    Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
                     MouseArea {
                         anchors.fill: parent
@@ -899,23 +916,57 @@ Variants {
                         Column {
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: 2
+                            rightPadding: 6
+
+                            readonly property int maxTextWidth: 220
 
                             Text {
-                                width: 140
+                                id: mediaTitleText
+                                width: Math.min(implicitWidth, parent.maxTextWidth)
                                 text: panel.activePlayer ? panel.activePlayer.trackTitle : ""
                                 color: "#d0d0d0"
                                 font.pixelSize: 12
                                 font.family: "monospace"
                                 elide: Text.ElideRight
+                                Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
                             }
 
                             Text {
-                                width: 140
+                                id: mediaArtistText
+                                width: Math.min(implicitWidth, parent.maxTextWidth)
                                 text: panel.activePlayer ? panel.activePlayer.trackArtist : ""
                                 color: "#666666"
                                 font.pixelSize: 10
                                 font.family: "monospace"
                                 elide: Text.ElideRight
+                                Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                            }
+                        }
+
+                        Row {
+                            id: cavaRow
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 1.5
+                            height: 30
+                            clip: true
+                            visible: width > 0
+                            width: (panel.activePlayer !== null && panel.activePlayer.isPlaying) ? implicitWidth : 0
+                            Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                            opacity: (panel.activePlayer !== null && panel.activePlayer.isPlaying) ? 1.0 : 0.0
+                            Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                            Repeater {
+                                model: panel.cavaBars
+
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    anchors.bottom: parent.bottom
+                                    width: 2
+                                    height: Math.max(1.5, (modelData / 100) * 30)
+                                    radius: 1
+                                    color: "#39c5bb"
+                                    Behavior on height { NumberAnimation { duration: 70; easing.type: Easing.OutCubic } }
+                                }
                             }
                         }
                     }
