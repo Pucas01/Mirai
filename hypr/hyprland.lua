@@ -30,6 +30,7 @@ local menu        = "hyprlauncher"
 
 hl.on("hyprland.start", function ()
     hl.exec_cmd("awww-daemon")
+    hl.exec_cmd("bash ~/.config/hypr/scripts/quickshell-watchdog.sh")
 end)
 
 hl.env("XCURSOR_SIZE", "24")
@@ -179,6 +180,7 @@ hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("quickshell ipc call launcher toggle"))
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("quickshell ipc call lock lock"), { locked = true })
+hl.bind(mainMod .. " + SHIFT + Q", hl.dsp.exec_cmd("bash ~/.config/hypr/scripts/quickshell-restart.sh"), { locked = true })
 
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
 hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }))
