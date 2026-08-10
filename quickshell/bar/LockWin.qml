@@ -14,8 +14,10 @@ Item {
     property bool isError: false
     property bool authenticating: false
     property string username: ""
-    property var wallpapers: ({})
-    property string fallbackWallpaper: ""
+    property var screenshots: ({})
+    property bool grimDone: false
+    property int preloadPending: 0
+    property bool unlocking: false
     property var activePlayer: {
         var players = Mpris.players.values
         return players.find(p => p.isPlaying) ?? (players.length > 0 ? players[0] : null)
@@ -28,28 +30,6 @@ Item {
         stdout: SplitParser { onRead: data => lockRoot.username = data.trim() }
     }
 
-    Process {
-        id: wallpaperQuery
-        command: ["awww", "query"]
-        running: false
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const map = {}
-                let first = ""
-                const lines = text.split("\n")
-                for (const line of lines) {
-                    const m = line.match(/^:\s*(\S+):.*currently displaying: image: (.+)$/)
-                    if (m) {
-                        map[m[1]] = m[2].trim()
-                        if (!first) first = m[2].trim()
-                    }
-                }
-                lockRoot.wallpapers = map
-                lockRoot.fallbackWallpaper = first
-            }
-        }
-    }
-
     Timer {
         id: clockTimer
         property var now: new Date()
@@ -59,15 +39,92 @@ Item {
         onTriggered: clockTimer.now = new Date()
     }
 
+    function safeOutputFile(name) {
+        return "/tmp/qs-lock-" + name.replace(/[^A-Za-z0-9_-]/g, "_") + ".png"
+    }
+
     function engage() {
         if (sessionLock.locked) return
         password = ""
         statusText = ""
         isError = false
         authenticating = false
-        wallpaperQuery.running = false
-        wallpaperQuery.running = true
+
+        var names = Quickshell.screens.map(function(s) { return s.name })
+        if (names.length === 0) {
+            sessionLock.locked = true
+            return
+        }
+        var map = {}
+        var cmds = []
+        for (var i = 0; i < names.length; i++) {
+            var file = lockRoot.safeOutputFile(names[i])
+            map[names[i]] = file
+            cmds.push("grim -o '" + names[i] + "' '" + file + "'")
+        }
+        lockRoot.screenshots = {}
+        lockRoot.grimDone = false
+        lockRoot.preloadPending = 0
+        lockFailsafeTimer.restart()
+        screenshotProc.pendingScreenshots = map
+        screenshotProc.command = ["bash", "-c", cmds.join(" & ") + " & wait"]
+        screenshotProc.running = false
+        screenshotProc.running = true
+    }
+
+    function tryFinishEngage() {
+        if (sessionLock.locked) return
+        if (!lockRoot.grimDone) return
+        if (lockRoot.preloadPending > 0) return
+        lockFailsafeTimer.stop()
         sessionLock.locked = true
+    }
+
+    function finishEngage() {
+        if (sessionLock.locked) return
+        lockFailsafeTimer.stop()
+        if (Object.keys(lockRoot.screenshots).length === 0) lockRoot.screenshots = screenshotProc.pendingScreenshots
+        sessionLock.locked = true
+    }
+
+    Timer {
+        id: lockFailsafeTimer
+        interval: 1200
+        onTriggered: lockRoot.finishEngage()
+    }
+
+    Process {
+        id: screenshotProc
+        property var pendingScreenshots: ({})
+        command: ["true"]
+        running: false
+        onExited: code => {
+            lockRoot.grimDone = true
+            if (code === 0) {
+                var names = Object.keys(pendingScreenshots)
+                lockRoot.preloadPending = names.length
+                lockRoot.screenshots = pendingScreenshots
+            } else {
+                lockRoot.tryFinishEngage()
+            }
+        }
+    }
+
+    Repeater {
+        model: lockRoot.grimDone ? Object.keys(lockRoot.screenshots) : []
+        delegate: Item {
+            required property string modelData
+            Image {
+                source: "file://" + lockRoot.screenshots[modelData]
+                asynchronous: true
+                onStatusChanged: {
+                    if (status === Image.Ready || status === Image.Error) {
+                        lockRoot.preloadPending = Math.max(0, lockRoot.preloadPending - 1)
+                        lockRoot.tryFinishEngage()
+                    }
+                }
+            }
+        }
     }
 
     function submit() {
@@ -119,7 +176,7 @@ Item {
             lockRoot.authenticating = false
             if (result === PamResult.Success) {
                 lockRoot.password = ""
-                sessionLock.locked = false
+                lockRoot.unlocking = true
             } else {
                 lockRoot.statusText = "incorrect password"
                 lockRoot.isError = true
@@ -144,37 +201,64 @@ Item {
                 id: lockSurface
                 color: "#1a1a1a"
 
-                readonly property string wallpaperSource: {
+                readonly property string bgSource: {
                     const name = lockSurface.screen ? lockSurface.screen.name : ""
-                    return (name && lockRoot.wallpapers[name]) ? lockRoot.wallpapers[name] : lockRoot.fallbackWallpaper
+                    return lockRoot.screenshots[name] || ""
+                }
+
+                Image {
+                    id: bgImage
+                    anchors.fill: parent
+                    source: lockSurface.bgSource ? "file://" + lockSurface.bgSource : ""
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    smooth: true
+                    visible: false
+                }
+
+                MultiEffect {
+                    id: bgBlur
+                    anchors.fill: parent
+                    source: bgImage
+                    blurEnabled: true
+                    blur: 1.0
+                    blurMax: 64
+                    autoPaddingEnabled: false
+                    opacity: 1.0
+                }
+
+                Rectangle {
+                    id: dimOverlay
+                    anchors.fill: parent
+                    color: "#66000000"
+                    opacity: 1.0
                 }
 
                 Item {
                     id: fadeRoot
                     anchors.fill: parent
+                    opacity: 0.0
+                    scale: 1.05
+                    Behavior on opacity { NumberAnimation { duration: 340; easing.type: Easing.OutQuint } }
+                    Behavior on scale { NumberAnimation { duration: 420; easing.type: Easing.OutQuint } }
+                    Component.onCompleted: { opacity = 1.0; scale = 1.0 }
 
-                    Image {
-                        id: bgImage
-                        anchors.fill: parent
-                        source: lockSurface.wallpaperSource ? "file://" + lockSurface.wallpaperSource : ""
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        smooth: true
-                        visible: false
+                    Connections {
+                        target: lockRoot
+                        function onUnlockingChanged() {
+                            if (lockRoot.unlocking) unlockAnim.start()
+                        }
                     }
 
-                    MultiEffect {
-                        anchors.fill: parent
-                        source: bgImage
-                        blurEnabled: true
-                        blur: 1.0
-                        blurMax: 64
-                        autoPaddingEnabled: false
-                    }
-
-                    Rectangle {
-                        anchors.fill: parent
-                        color: "#66000000"
+                    SequentialAnimation {
+                        id: unlockAnim
+                        ParallelAnimation {
+                            NumberAnimation { target: fadeRoot; property: "opacity"; to: 0.0; duration: 180; easing.type: Easing.InCubic }
+                            NumberAnimation { target: fadeRoot; property: "scale"; to: 0.96; duration: 180; easing.type: Easing.InCubic }
+                            NumberAnimation { target: bgBlur; property: "opacity"; to: 0.0; duration: 180; easing.type: Easing.InCubic }
+                            NumberAnimation { target: dimOverlay; property: "opacity"; to: 0.0; duration: 180; easing.type: Easing.InCubic }
+                        }
+                        ScriptAction { script: { sessionLock.locked = false; lockRoot.unlocking = false } }
                     }
 
                     Column {
