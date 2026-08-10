@@ -145,12 +145,80 @@ Window {
             ensureStartIconDirProc.running = false; ensureStartIconDirProc.running = true
             genCursorPreviewsProc.running = false; genCursorPreviewsProc.running = true
             if (settingsWin.section === "monitors") settingsWin.refreshMonitors()
+            settingsWin.checkForUpdate()
         }
     }
 
     onSectionChanged: if (section === "monitors") refreshMonitors()
 
     Component.onCompleted: { loadPfpProc.running = true; loadStartIconProc.running = true; loadCursorProc.running = true }
+
+    readonly property string repoDir: Quickshell.shellPath("..")
+    property bool updateAvailable: false
+    property bool updateChecking: false
+    property bool updateApplying: false
+    property string updateError: ""
+    property int updateCommitsBehind: 0
+
+    function checkForUpdate() {
+        if (settingsWin.updateChecking || settingsWin.updateApplying) return
+        settingsWin.updateChecking = true
+        checkUpdateProc.running = false
+        checkUpdateProc.running = true
+    }
+
+    Timer {
+        interval: 1800000
+        running: true
+        repeat: true
+        onTriggered: settingsWin.checkForUpdate()
+    }
+
+    Process {
+        id: checkUpdateProc
+        command: ["bash", "-c",
+            "cd \"" + settingsWin.repoDir + "\" && git fetch --quiet origin 2>/dev/null && " +
+            "git rev-list --count 'HEAD..@{u}' 2>/dev/null"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                settingsWin.updateChecking = false
+                var n = parseInt(text.trim(), 10)
+                if (isNaN(n)) return
+                settingsWin.updateCommitsBehind = n
+                settingsWin.updateAvailable = n > 0
+            }
+        }
+    }
+
+    function applyUpdate() {
+        if (settingsWin.updateApplying) return
+        settingsWin.updateApplying = true
+        settingsWin.updateError = ""
+        applyUpdateProc.running = false
+        applyUpdateProc.running = true
+    }
+
+    Process {
+        id: applyUpdateProc
+        command: ["bash", "-c",
+            "cd \"" + settingsWin.repoDir + "\" && git pull --ff-only origin main"]
+        onExited: code => {
+            settingsWin.updateApplying = false
+            if (code === 0) {
+                settingsWin.updateAvailable = false
+                settingsWin.updateCommitsBehind = 0
+                restartQuickshellProc.running = false
+                restartQuickshellProc.running = true
+            } else {
+                settingsWin.updateError = "update failed (exit " + code + ")"
+            }
+        }
+    }
+
+    Process {
+        id: restartQuickshellProc
+        command: ["bash", settingsWin.repoDir + "/hypr/scripts/quickshell-restart.sh"]
+    }
 
     Process {
         id: floatProc
@@ -449,6 +517,7 @@ Window {
                         property string sym: ""
                         property string target: ""
                         property bool active: settingsWin.section === target
+                        property bool showBadge: false
                         width: parent.width
                         height: 38
 
@@ -528,6 +597,13 @@ Window {
                                 onContainsMouseChanged: navCanvas.hp = containsMouse ? 1.0 : 0.0
                                 onClicked: settingsWin.section = navItem.target
                             }
+
+                            Rectangle {
+                                visible: navItem.showBadge
+                                anchors { top: parent.top; right: parent.right; topMargin: 4; rightMargin: 4 }
+                                width: 8; height: 8; radius: 4
+                                color: "#ff4444"
+                            }
                         }
                     }
 
@@ -549,6 +625,7 @@ Window {
                     sym: "󰋽"
                     label: "about"
                     target: "about"
+                    showBadge: settingsWin.updateAvailable
                 }
             }
 
