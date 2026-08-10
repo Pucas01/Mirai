@@ -7,4 +7,5 @@ ShellRoot {
     Bar {}
     AppLauncher {}
     LockWin {}
+    KeybindsPopup {}
 }
