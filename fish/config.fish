@@ -24,12 +24,10 @@ if status is-interactive
     set -g fish_pager_color_description 666666
     set -g fish_pager_color_selected_background --background=2a8a8a
 
-    abbr -a ff fastfetch
-
     if status is-command-substitution
         # skip
     else if not set -q FASTFETCH_SHOWN
         set -gx FASTFETCH_SHOWN 1
-        fastfetch
+        ff
     end
 end

@@ -15,10 +15,10 @@ Window {
     property alias audioSliderActive: audioSectionInstance.sliderActive
 
     property string section: "wallpaper"
-    property string wallpaperDir: "/home/pucas02/Pictures/Wallpapers"
+    property string wallpaperDir: "/home/pucas02/Pictures/Mirai/Wallpapers"
     property string appliedWallpaper: ""
 
-    property string pfpDir: "/home/pucas02/Pictures/Avatars"
+    property string pfpDir: "/home/pucas02/Pictures/Mirai/Avatars"
     property string pfpStatePath: "/home/pucas02/.cache/qs-pfp-path"
     property string pfpPath: ""
 
@@ -30,7 +30,7 @@ Window {
     }
 
     readonly property string defaultStartIcon: "󰣇"
-    property string startIconDir: "/home/pucas02/Pictures/StartIcon"
+    property string startIconDir: "/home/pucas02/Pictures/Mirai/StartIcon"
     property string startIconStatePath: "/home/pucas02/.cache/qs-start-icon-path"
     property string startIconPath: ""
 
@@ -102,6 +102,7 @@ Window {
         if (visible) {
             floatProc.running = false; floatProc.running = true
             wallpaperSectionInstance.ensureDir()
+            customizationSectionInstance.ensureDir()
             ensurePfpDirProc.running = false; ensurePfpDirProc.running = true
             ensureStartIconDirProc.running = false; ensureStartIconDirProc.running = true
             if (settingsWin.section === "monitors") settingsWin.refreshMonitors()
@@ -121,7 +122,7 @@ Window {
         id: ensurePfpDirProc
         command: ["mkdir", "-p", settingsWin.pfpDir]
         running: false
-        onExited: profileSectionInstance.refreshPfpModel()
+        onExited: customizationSectionInstance.refreshPfpModel()
     }
 
     Process {
@@ -164,7 +165,7 @@ Window {
         id: ensureStartIconDirProc
         command: ["mkdir", "-p", settingsWin.startIconDir]
         running: false
-        onExited: profileSectionInstance.refreshStartIconModel()
+        onExited: customizationSectionInstance.refreshStartIconModel()
     }
 
     Process {
@@ -427,12 +428,12 @@ Window {
                         }
                     }
 
-                    NavItem { sym: "󰀄"; label: "profile"; target: "profile" }
                     NavItem { sym: "󰸉"; label: "wallpaper"; target: "wallpaper" }
                     NavItem { sym: "󰍹"; label: "monitors"; target: "monitors" }
                     NavItem { sym: "󰕾"; label: "audio"; target: "audio" }
                     NavItem { sym: "󰂯"; label: "bluetooth"; target: "bluetooth" }
                     NavItem { sym: "󰤨"; label: "network"; target: "network" }
+                    NavItem { sym: "󰆧"; label: "customization"; target: "customization" }
                 }
 
                 Rectangle {
@@ -451,12 +452,6 @@ Window {
             Item {
                 width: parent.width - 150
                 height: parent.height
-
-                ProfileSection {
-                    id: profileSectionInstance
-                    settingsWin: settingsWin
-                    sectionActive: settingsWin.section === "profile"
-                }
 
                 WallpaperSection {
                     id: wallpaperSectionInstance
@@ -486,6 +481,12 @@ Window {
                     id: networkSectionInstance
                     settingsWin: settingsWin
                     sectionActive: settingsWin.section === "network"
+                }
+
+                CustomizationSection {
+                    id: customizationSectionInstance
+                    settingsWin: settingsWin
+                    sectionActive: settingsWin.section === "customization"
                 }
 
                 AboutSection {
