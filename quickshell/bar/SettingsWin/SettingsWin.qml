@@ -612,6 +612,7 @@ Window {
                     NavItem { sym: "󰕾"; label: "audio"; target: "audio" }
                     NavItem { sym: "󰂯"; label: "bluetooth"; target: "bluetooth" }
                     NavItem { sym: "󰤨"; label: "network"; target: "network" }
+                    NavItem { sym: "󰐊"; label: "autostart"; target: "autostart" }
                     NavItem { sym: "󰆧"; label: "customization"; target: "customization" }
                 }
 
@@ -661,6 +662,12 @@ Window {
                     id: networkSectionInstance
                     settingsWin: settingsWin
                     sectionActive: settingsWin.section === "network"
+                }
+
+                AutostartSection {
+                    id: autostartSectionInstance
+                    settingsWin: settingsWin
+                    sectionActive: settingsWin.section === "autostart"
                 }
 
                 CustomizationSection {
