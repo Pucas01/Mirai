@@ -54,3 +54,10 @@ hl.window_rule({
     match = { title = "qs-ethernet" },
     float = true,
 })
+
+hl.window_rule({
+    name  = "float-qs-screenshot-editor",
+    match = { title = "qs-screenshot-editor" },
+    float = true,
+    stay_focused = true,
+})

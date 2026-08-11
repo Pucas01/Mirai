@@ -10,10 +10,11 @@ Window {
     property bool saved: false
     property string pendingPath: ""
     property int trigger: 0
+    signal editRequested(string path, int trig)
     flags: Qt.ToolTip | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint
     color: "transparent"
-    width: 310
-    height: 240
+    width: 380
+    height: 280
     visible: false
 
     onTriggerChanged: {
@@ -87,15 +88,23 @@ Window {
 
             Rectangle {
                 width: parent.width
-                height: 182
+                height: 222
                 color: "#111111"
                 clip: true
 
                 Image {
+                    id: ssImage
                     anchors.fill: parent
                     source: screenshotWin.imagePath !== "" ? ("file://" + screenshotWin.imagePath + "?t=" + screenshotWin.trigger) : ""
                     fillMode: Image.PreserveAspectFit
                     cache: false
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: screenshotWin.editRequested(screenshotWin.imagePath, screenshotWin.trigger)
                 }
             }
 
@@ -107,7 +116,7 @@ Window {
                     property string label: ""
                     property bool active: false
                     signal clicked()
-                    width: (parent.width - 12) / 3
+                    width: (parent.width - 18) / 4
                     height: 30
 
                     Canvas {
@@ -185,6 +194,10 @@ Window {
                         saveProc.running = false
                         saveProc.running = true
                     }
+                }
+                SsBtn {
+                    label: "edit"
+                    onClicked: screenshotWin.editRequested(screenshotWin.imagePath, screenshotWin.trigger)
                 }
                 SsBtn {
                     label: "discard"

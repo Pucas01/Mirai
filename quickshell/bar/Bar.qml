@@ -431,6 +431,16 @@ Variants {
 
         ScreenshotWin {
             id: screenshotWin
+            onEditRequested: (path, trig) => {
+                screenshotWin.isOpen = false
+                screenshotWin.visible = false
+                screenshotEditor.open(path, trig)
+                screenshotEditor.visible = true
+            }
+        }
+
+        ScreenshotEditor {
+            id: screenshotEditor
         }
 
         StartMenu {
