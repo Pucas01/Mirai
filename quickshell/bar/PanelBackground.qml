@@ -3,6 +3,7 @@ import QtQuick
 Rectangle {
     id: panelBackground
     default property alias content: panelContent.children
+    property bool showBorder: true
 
     gradient: Gradient {
         orientation: Gradient.Vertical
@@ -11,7 +12,7 @@ Rectangle {
         GradientStop { position: 0.4;  color: "#232323" }
         GradientStop { position: 1.0;  color: "#181818" }
     }
-    border.color: "#39c5bb"
+    border.color: panelBackground.showBorder ? "#39c5bb" : "transparent"
     border.width: 1
 
     Rectangle {

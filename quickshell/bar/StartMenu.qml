@@ -16,10 +16,19 @@ Window {
         if (section) settingsWin.section = section
         settingsWin.visible = true
     }
+    readonly property var kanadeEntry: ({
+        id: "kanade",
+        name: "Kanade",
+        genericName: "music library & DAP sync",
+        icon: "multimedia-player",
+        execute: function() { kanadeToggleProc.running = false; kanadeToggleProc.running = true }
+    })
+
     property var allApps: {
         try {
             return DesktopEntries.applications.values
                 .filter(e => e && !e.noDisplay && e.name !== "")
+                .concat([startMenuWin.kanadeEntry])
                 .sort((a, b) => a.name.localeCompare(b.name))
         } catch(_) { return [] }
     }
@@ -61,6 +70,7 @@ Window {
     SettingsWin { id: settingsWin }
 
     Process { id: lockProc; command: ["quickshell", "ipc", "call", "lock", "lock"] }
+    Process { id: kanadeToggleProc; command: ["quickshell", "ipc", "call", "kanade", "toggle"] }
     Process { id: logoutProc; command: ["bash", "-c", "hyprctl dispatch exit"] }
     Process { id: rebootProc; command: ["systemctl", "reboot"] }
     Process { id: shutdownProc; command: ["systemctl", "poweroff"] }

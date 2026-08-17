@@ -15,10 +15,19 @@ Window {
     property string usagePath: Quickshell.env("HOME") + "/.cache/qs-launcher-usage.json"
     property var usageStats: ({})
 
+    readonly property var kanadeEntry: ({
+        id: "kanade",
+        name: "Kanade",
+        genericName: "music library & DAP sync",
+        icon: "multimedia-player",
+        execute: function() { kanadeToggleProc.running = false; kanadeToggleProc.running = true }
+    })
+
     property var allApps: {
         try {
             return DesktopEntries.applications.values
                 .filter(e => e && !e.noDisplay && e.name !== "")
+                .concat([launcherWin.kanadeEntry])
                 .sort((a, b) => a.name.localeCompare(b.name))
         } catch (_) { return [] }
     }
@@ -125,6 +134,12 @@ Window {
     Process {
         id: saveUsageProc
         command: ["true"]
+        running: false
+    }
+
+    Process {
+        id: kanadeToggleProc
+        command: ["quickshell", "ipc", "call", "kanade", "toggle"]
         running: false
     }
 
