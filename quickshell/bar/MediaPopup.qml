@@ -226,11 +226,17 @@ Window {
                             id: btnCanvas
                             anchors.fill: parent
                             property real hoverProgress: 0.0
+                            property real mx: 0.5
+                            property real my: 0.5
                             Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                            Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                            Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                             onHoverProgressChanged: requestPaint()
+                            onMxChanged: requestPaint()
+                            onMyChanged: requestPaint()
                             onWidthChanged: requestPaint()
                             onHeightChanged: requestPaint()
-                            onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, hoverProgress, 6)
+                            onPaint: DivaPaint.paintFacetPill(btnCanvas, hoverProgress, 6)
                         }
 
                         Text {
@@ -247,6 +253,10 @@ Window {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onContainsMouseChanged: btnCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                            onPositionChanged: mouse => {
+                                btnCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                                btnCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                            }
                             onClicked: parent.activated()
                         }
                     }
@@ -275,11 +285,17 @@ Window {
                         id: playerCycleCanvas
                         anchors.fill: parent
                         property real hoverProgress: 0.0
+                        property real mx: 0.5
+                        property real my: 0.5
                         Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                        Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                        Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                         onHoverProgressChanged: requestPaint()
+                        onMxChanged: requestPaint()
+                        onMyChanged: requestPaint()
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
-                        onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, hoverProgress, 5)
+                        onPaint: DivaPaint.paintFacetPill(playerCycleCanvas, hoverProgress, 5)
                     }
 
                     Row {
@@ -306,6 +322,10 @@ Window {
                         anchors.fill: parent; hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onContainsMouseChanged: playerCycleCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                        onPositionChanged: mouse => {
+                            playerCycleCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                            playerCycleCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                        }
                         onClicked: {
                             var players = Mpris.players.values
                             if (players.length < 2) return

@@ -97,11 +97,17 @@ Window {
                         id: clearAllCanvas
                         anchors.fill: parent
                         property real hoverProgress: 0.0
+                        property real mx: 0.5
+                        property real my: 0.5
                         Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                        Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                        Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                         onHoverProgressChanged: requestPaint()
+                        onMxChanged: requestPaint()
+                        onMyChanged: requestPaint()
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
-                        onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, hoverProgress, 4)
+                        onPaint: DivaPaint.paintFacetPill(clearAllCanvas, hoverProgress, 4)
                     }
                     Text {
                         anchors.centerIn: parent
@@ -115,6 +121,10 @@ Window {
                         anchors.fill: parent; hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onContainsMouseChanged: clearAllCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                        onPositionChanged: mouse => {
+                            clearAllCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                            clearAllCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                        }
                         onClicked: {
                             notifPopup.closePopup()
                             try {
@@ -197,11 +207,17 @@ Window {
                                     id: notifCanvas
                                     anchors.fill: parent
                                     property real hoverProgress: 0.0
+                                    property real mx: 0.5
+                                    property real my: 0.5
                                     Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                    Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                                    Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                                     onHoverProgressChanged: requestPaint()
+                                    onMxChanged: requestPaint()
+                                    onMyChanged: requestPaint()
                                     onWidthChanged: requestPaint()
                                     onHeightChanged: requestPaint()
-                                    onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, hoverProgress, 5)
+                                    onPaint: DivaPaint.paintFacetPill(notifCanvas, hoverProgress, 5)
                                 }
 
                                 Row {
@@ -289,6 +305,10 @@ Window {
                                     anchors.fill: parent; hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onContainsMouseChanged: notifCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                                    onPositionChanged: mouse => {
+                                        notifCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                                        notifCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                                    }
                                     onClicked: {
                                         if (groupDelegate.modelData.items.length > 1) {
                                             notifPopup.toggleGroup(groupDelegate.modelData.appName)

@@ -106,11 +106,17 @@ Window {
                                 id: entryCanvas
                                 anchors.fill: parent
                                 property real hoverProgress: 0.0
+                                property real mx: 0.5
+                                property real my: 0.5
                                 Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                                Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                                 onHoverProgressChanged: requestPaint()
+                                onMxChanged: requestPaint()
+                                onMyChanged: requestPaint()
                                 onWidthChanged: requestPaint()
                                 onHeightChanged: requestPaint()
-                                onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, hoverProgress, 5)
+                                onPaint: DivaPaint.paintFacetPill(entryCanvas, hoverProgress, 5)
                             }
 
                             Text {
@@ -131,6 +137,10 @@ Window {
                                 hoverEnabled: true
                                 enabled: modelData.enabled
                                 onContainsMouseChanged: entryCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                                onPositionChanged: mouse => {
+                                    entryCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                                    entryCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                                }
                                 onClicked: {
                                     modelData.triggered()
                                     trayMenuWin.closeMenu()

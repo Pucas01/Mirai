@@ -138,11 +138,17 @@ Item {
             id: asBtnCanvas
             anchors.fill: parent
             property real hp: 0.0
+            property real mx: 0.5
+            property real my: 0.5
             Behavior on hp { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+            Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+            Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
             onHpChanged: requestPaint()
+            onMxChanged: requestPaint()
+            onMyChanged: requestPaint()
             onWidthChanged: requestPaint()
             onHeightChanged: requestPaint()
-            onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, parent.active ? 1.0 : Math.max(hp, 0), 5)
+            onPaint: DivaPaint.paintFacetPill(asBtnCanvas, parent.active ? 1.0 : Math.max(hp, 0), 5)
         }
 
         Text {
@@ -159,6 +165,10 @@ Item {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onContainsMouseChanged: asBtnCanvas.hp = containsMouse ? 1.0 : 0.0
+            onPositionChanged: mouse => {
+                asBtnCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                asBtnCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+            }
             onClicked: parent.clicked()
         }
     }

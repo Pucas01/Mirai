@@ -192,11 +192,17 @@ Window {
             id: btnCanvas
             anchors.fill: parent
             property real hp: 0.0
+            property real mx: 0.5
+            property real my: 0.5
             Behavior on hp { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+            Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+            Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
             onHpChanged: requestPaint()
+            onMxChanged: requestPaint()
+            onMyChanged: requestPaint()
             onWidthChanged: requestPaint()
             onHeightChanged: requestPaint()
-            onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, parent.active ? 1.0 : Math.max(hp, 0), 5)
+            onPaint: DivaPaint.paintFacetPill(btnCanvas, parent.active ? 1.0 : Math.max(hp, 0), 5)
         }
 
         Text {
@@ -212,6 +218,10 @@ Window {
             anchors.fill: parent; hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onContainsMouseChanged: btnCanvas.hp = containsMouse ? 1.0 : 0.0
+            onPositionChanged: mouse => {
+                btnCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                btnCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+            }
             onClicked: parent.clicked()
         }
     }
@@ -258,11 +268,17 @@ Window {
                         id: closeBtnCanvas
                         anchors.fill: parent
                         property real hp: 0.0
+                        property real mx: 0.5
+                        property real my: 0.5
                         Behavior on hp { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                        Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                        Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                         onHpChanged: requestPaint()
+                        onMxChanged: requestPaint()
+                        onMyChanged: requestPaint()
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
-                        onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, closeBtnCanvas.hp, 4, DivaPaint.ACCENT_RED)
+                        onPaint: DivaPaint.paintFacetPill(closeBtnCanvas, closeBtnCanvas.hp, 4, DivaPaint.ACCENT_RED)
                     }
 
                     Text {
@@ -279,6 +295,10 @@ Window {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onContainsMouseChanged: closeBtnCanvas.hp = containsMouse ? 1.0 : 0.0
+                        onPositionChanged: mouse => {
+                            closeBtnCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                            closeBtnCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                        }
                         onClicked: editorWin.closeEditor()
                     }
                 }

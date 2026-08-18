@@ -5,6 +5,16 @@ Rectangle {
     default property alias content: panelContent.children
     property bool showBorder: true
 
+    Rectangle {
+        visible: panelBackground.showBorder
+        anchors.fill: parent
+        anchors.margins: -1
+        color: "transparent"
+        border.color: "#8ff5f0"
+        border.width: 1
+        z: -1
+    }
+
     gradient: Gradient {
         orientation: Gradient.Vertical
         GradientStop { position: 0.0;  color: "#3d3d3d" }
@@ -12,7 +22,7 @@ Rectangle {
         GradientStop { position: 0.4;  color: "#232323" }
         GradientStop { position: 1.0;  color: "#181818" }
     }
-    border.color: panelBackground.showBorder ? "#39c5bb" : "transparent"
+    border.color: panelBackground.showBorder ? "#1f8a82" : "transparent"
     border.width: 1
 
     Rectangle {

@@ -535,48 +535,35 @@ Variants {
 
             Rectangle {
                 anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-                height: 1
-                color: "#39c5bb"
+                height: 2
+                gradient: Gradient {
+                    orientation: Gradient.Vertical
+                    GradientStop { position: 0.0; color: "#8ff5f0" }
+                    GradientStop { position: 1.0; color: "#1f8a82" }
+                }
             }
 
             Row {
                 anchors { right: parent.right; top: parent.top; bottom: parent.bottom; rightMargin: 14 }
                 spacing: 10
 
-                Item {
+                GlowButton {
                     id: networkItem
                     width: 35; height: 30
                     anchors.verticalCenter: parent.verticalCenter
-
-                    Canvas {
-                        id: networkCanvas
-                        anchors.fill: parent
-                        property real hoverProgress: 0.0
-                        Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
-                        onHoverProgressChanged: requestPaint()
-                        onWidthChanged: requestPaint()
-                        onHeightChanged: requestPaint()
-                        onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, hoverProgress)
-                    }
 
                     Text {
                         anchors.centerIn: parent
                         text: panel.netType === "ethernet" ? "󰈀" : (panel.netType === "wifi" ? "󰤨" : "󰤭")
                         font.pixelSize: 14
-                        color: networkMouseArea.containsMouse ? "#ffffff" : (panel.netConnected ? "#888888" : "#555555")
+                        color: networkItem.hovered ? "#ffffff" : (panel.netConnected ? "#888888" : "#555555")
                         Behavior on color { ColorAnimation { duration: 130 } }
                     }
 
-                    MouseArea {
-                        id: networkMouseArea
-                        anchors.fill: parent; hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onContainsMouseChanged: networkCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
-                        onClicked: {
-                            var center = mapToGlobal(width / 2, 0)
-                            var barBottom = barBg.mapToGlobal(0, barBg.height)
-                            networkPopup.open(center.x - networkPopup.width / 2, barBottom.y + 6)
-                        }
+                    onClicked: {
+                        var center = mapToGlobal(width / 2, 0)
+                        var barBottom = barBg.mapToGlobal(0, barBg.height)
+                        networkPopup.open(center.x - networkPopup.width / 2, barBottom.y + 6)
                     }
                 }
 
@@ -593,11 +580,17 @@ Variants {
                         id: audioCanvas
                         anchors.fill: parent
                         property real hoverProgress: 0.0
+                        property real mx: 0.5
+                        property real my: 0.5
                         Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                        Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                        Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                         onHoverProgressChanged: requestPaint()
+                        onMxChanged: requestPaint()
+                        onMyChanged: requestPaint()
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
-                        onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, hoverProgress)
+                        onPaint: DivaPaint.paintFacetPill(audioCanvas, hoverProgress)
                     }
 
                     Text {
@@ -613,6 +606,10 @@ Variants {
                         anchors.fill: parent; hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onContainsMouseChanged: audioCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                        onPositionChanged: mouse => {
+                            audioCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                            audioCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                        }
                         onClicked: {
                             var center = mapToGlobal(width / 2, 0)
                             var barBottom = barBg.mapToGlobal(0, barBg.height)
@@ -638,11 +635,17 @@ Variants {
                         id: brightnessCanvas
                         anchors.fill: parent
                         property real hoverProgress: 0.0
+                        property real mx: 0.5
+                        property real my: 0.5
                         Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                        Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                        Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                         onHoverProgressChanged: requestPaint()
+                        onMxChanged: requestPaint()
+                        onMyChanged: requestPaint()
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
-                        onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, hoverProgress)
+                        onPaint: DivaPaint.paintFacetPill(brightnessCanvas, hoverProgress)
                     }
 
                     Text {
@@ -658,6 +661,10 @@ Variants {
                         anchors.fill: parent; hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onContainsMouseChanged: brightnessCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                        onPositionChanged: mouse => {
+                            brightnessCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                            brightnessCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                        }
                         onClicked: {
                             var center = mapToGlobal(width / 2, 0)
                             var barBottom = barBg.mapToGlobal(0, barBg.height)
@@ -683,11 +690,17 @@ Variants {
                         id: batteryCanvas
                         anchors.fill: parent
                         property real hoverProgress: 0.0
+                        property real mx: 0.5
+                        property real my: 0.5
                         Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                        Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                        Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                         onHoverProgressChanged: requestPaint()
+                        onMxChanged: requestPaint()
+                        onMyChanged: requestPaint()
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
-                        onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, hoverProgress)
+                        onPaint: DivaPaint.paintFacetPill(batteryCanvas, hoverProgress)
                     }
 
                     Row {
@@ -718,6 +731,10 @@ Variants {
                         anchors.fill: parent; hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onContainsMouseChanged: batteryCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                        onPositionChanged: mouse => {
+                            batteryCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                            batteryCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                        }
                         onClicked: {
                             var center = mapToGlobal(width / 2, 0)
                             var barBottom = barBg.mapToGlobal(0, barBg.height)
@@ -735,11 +752,17 @@ Variants {
                         id: bellCanvas
                         anchors.fill: parent
                         property real hoverProgress: 0.0
+                        property real mx: 0.5
+                        property real my: 0.5
                         Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                        Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                        Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                         onHoverProgressChanged: requestPaint()
+                        onMxChanged: requestPaint()
+                        onMyChanged: requestPaint()
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
-                        onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, hoverProgress)
+                        onPaint: DivaPaint.paintFacetPill(bellCanvas, hoverProgress)
                     }
 
                     Text {
@@ -762,6 +785,10 @@ Variants {
                         anchors.fill: parent; hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onContainsMouseChanged: bellCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                        onPositionChanged: mouse => {
+                            bellCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                            bellCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                        }
                         onClicked: {
                             var center = mapToGlobal(width / 2, 0)
                             var barBottom = barBg.mapToGlobal(0, barBg.height)
@@ -885,11 +912,17 @@ Variants {
                     id: weatherCanvas
                     anchors.fill: parent
                     property real hoverProgress: 0.0
+                    property real mx: 0.5
+                    property real my: 0.5
                     Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                    Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                    Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                     onHoverProgressChanged: requestPaint()
+                    onMxChanged: requestPaint()
+                    onMyChanged: requestPaint()
                     onWidthChanged: requestPaint()
                     onHeightChanged: requestPaint()
-                    onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, hoverProgress, 6)
+                    onPaint: DivaPaint.paintFacetPill(weatherCanvas, hoverProgress, 6)
                 }
 
                 Row {
@@ -920,6 +953,10 @@ Variants {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onContainsMouseChanged: weatherCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                    onPositionChanged: mouse => {
+                        weatherCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                        weatherCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                    }
                     onClicked: {
                         var center = mapToGlobal(width / 2, 0)
                         var barBottom = barBg.mapToGlobal(0, barBg.height)
@@ -941,11 +978,17 @@ Variants {
                     id: colorPickerCanvas
                     anchors.fill: parent
                     property real hoverProgress: 0.0
+                    property real mx: 0.5
+                    property real my: 0.5
                     Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                    Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                    Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                     onHoverProgressChanged: requestPaint()
+                    onMxChanged: requestPaint()
+                    onMyChanged: requestPaint()
                     onWidthChanged: requestPaint()
                     onHeightChanged: requestPaint()
-                    onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, hoverProgress, 6)
+                    onPaint: DivaPaint.paintFacetPill(colorPickerCanvas, hoverProgress, 6)
                 }
 
                 Row {
@@ -986,6 +1029,10 @@ Variants {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onContainsMouseChanged: colorPickerCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                    onPositionChanged: mouse => {
+                        colorPickerCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                        colorPickerCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                    }
                     onClicked: panel.pickColor()
                 }
             }
@@ -1189,16 +1236,22 @@ Variants {
                             property real activeProgress: active ? 1.0 : 0.0
                             Behavior on activeProgress { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                             property real hoverProgress: 0.0
+                            property real mx: 0.5
+                            property real my: 0.5
                             Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                            Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                            Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                             property real pulse: 0.0
                             onActiveProgressChanged: requestPaint()
                             onWidthChanged: requestPaint()
                             onHeightChanged: requestPaint()
                             onVisibleChanged: if (visible) requestPaint()
                             onHoverProgressChanged: requestPaint()
+                            onMxChanged: requestPaint()
+                            onMyChanged: requestPaint()
                             onPulseChanged: requestPaint()
 
-                            onPaint: DivaPaint.paintWsPill(getContext("2d"), width, height, activeProgress, hoverProgress, pulse)
+                            onPaint: DivaPaint.paintWsPill(pill, activeProgress, hoverProgress, pulse)
                         }
 
                         IconImage {
@@ -1224,6 +1277,10 @@ Variants {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onContainsMouseChanged: pill.hoverProgress = containsMouse ? 1.0 : 0.0
+                            onPositionChanged: mouse => {
+                                pill.mx = Math.max(0, Math.min(1, mouse.x / width))
+                                pill.my = Math.max(0, Math.min(1, mouse.y / height))
+                            }
                             onClicked: Hyprland.dispatch("hl.dsp.focus({workspace=\"" + modelData.id + "\"})")
                             onWheel: wheel => { wheel.accepted = false }
                         }
@@ -1242,11 +1299,17 @@ Variants {
                 id: startBtnCanvas
                 anchors.fill: parent
                 property real hoverProgress: 0.0
+                property real mx: 0.5
+                property real my: 0.5
                 Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                 onHoverProgressChanged: requestPaint()
+                onMxChanged: requestPaint()
+                onMyChanged: requestPaint()
                 onWidthChanged: requestPaint()
                 onHeightChanged: requestPaint()
-                onPaint: DivaPaint.paintFacetSlant(getContext("2d"), width, height, hoverProgress, 24)
+                onPaint: DivaPaint.paintFacetSlant(startBtnCanvas, hoverProgress, 24)
             }
 
             Text {
@@ -1278,6 +1341,10 @@ Variants {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onContainsMouseChanged: startBtnCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                onPositionChanged: mouse => {
+                    startBtnCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                    startBtnCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                }
                 onClicked: {
                     var pos = barBg.mapToGlobal(0, barBg.height)
                     startMenu.open(pos.x, pos.y + 6)

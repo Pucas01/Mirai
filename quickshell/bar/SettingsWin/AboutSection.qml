@@ -117,11 +117,17 @@ Item {
                         id: updateBtnCanvas
                         anchors.fill: parent
                         property real hp: 0.0
+                        property real mx: 0.5
+                        property real my: 0.5
                         Behavior on hp { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                        Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                        Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                         onHpChanged: requestPaint()
+                        onMxChanged: requestPaint()
+                        onMyChanged: requestPaint()
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
-                        onPaint: DivaPaint.paintFacetPill(getContext("2d"), width, height, 1.0, 6)
+                        onPaint: DivaPaint.paintFacetPill(updateBtnCanvas, 1.0, 6)
                     }
 
                     Row {
@@ -149,6 +155,10 @@ Item {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onContainsMouseChanged: updateBtnCanvas.hp = containsMouse ? 1.0 : 0.0
+                        onPositionChanged: mouse => {
+                            updateBtnCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                            updateBtnCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                        }
                         onClicked: aboutSection.settingsWin.applyUpdate()
                     }
                 }

@@ -10,7 +10,15 @@ function facetShape(ctx, w, h, cut) {
     ctx.lineTo(0, h); ctx.lineTo(0, cut); ctx.closePath()
 }
 
-function paintFacetPill(ctx, w, h, hp, cut, accent) {
+function glowCenter(canvas, w, h) {
+    var mx = (canvas && canvas.mx !== undefined) ? canvas.mx : 0.5
+    var my = (canvas && canvas.my !== undefined) ? canvas.my : 0.5
+    return { x: w * mx, y: h * my }
+}
+
+function paintFacetPill(canvas, hp, cut, accent) {
+    var ctx = canvas.getContext("2d")
+    var w = canvas.width, h = canvas.height
     ctx.clearRect(0, 0, w, h)
     if (cut === undefined) cut = 5
     if (accent === undefined) accent = ACCENT_TEAL
@@ -35,8 +43,9 @@ function paintFacetPill(ctx, w, h, hp, cut, accent) {
         drawShape()
         ctx.save()
         ctx.clip()
-        var innerGlow = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) * 0.75)
-        innerGlow.addColorStop(0, "rgba(" + accent.glowHi + "," + (hp * 0.5) + ")")
+        var gc = glowCenter(canvas, w, h)
+        var innerGlow = ctx.createRadialGradient(gc.x, gc.y, 0, gc.x, gc.y, Math.max(w, h) * 0.85)
+        innerGlow.addColorStop(0, "rgba(" + accent.glowHi + "," + (hp * 0.55) + ")")
         innerGlow.addColorStop(0.6, "rgba(" + accent.glowMid + "," + (hp * 0.22) + ")")
         innerGlow.addColorStop(1, "rgba(" + accent.glowMid + ",0.0)")
         ctx.fillStyle = innerGlow
@@ -65,7 +74,9 @@ function paintFacetPill(ctx, w, h, hp, cut, accent) {
     }
 }
 
-function paintFacetSlant(ctx, w, h, hp, slant, accent) {
+function paintFacetSlant(canvas, hp, slant, accent) {
+    var ctx = canvas.getContext("2d")
+    var w = canvas.width, h = canvas.height
     ctx.clearRect(0, 0, w, h)
     if (accent === undefined) accent = ACCENT_TEAL
 
@@ -94,8 +105,9 @@ function paintFacetSlant(ctx, w, h, hp, slant, accent) {
         drawShape()
         ctx.save()
         ctx.clip()
-        var innerGlow = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) * 0.75)
-        innerGlow.addColorStop(0, "rgba(" + accent.glowHi + "," + (hp * 0.5) + ")")
+        var gc = glowCenter(canvas, w, h)
+        var innerGlow = ctx.createRadialGradient(gc.x, gc.y, 0, gc.x, gc.y, Math.max(w, h) * 0.85)
+        innerGlow.addColorStop(0, "rgba(" + accent.glowHi + "," + (hp * 0.55) + ")")
         innerGlow.addColorStop(0.6, "rgba(" + accent.glowMid + "," + (hp * 0.22) + ")")
         innerGlow.addColorStop(1, "rgba(" + accent.glowMid + ",0.0)")
         ctx.fillStyle = innerGlow
@@ -126,7 +138,9 @@ function paintFacetSlant(ctx, w, h, hp, slant, accent) {
     }
 }
 
-function paintWsPill(ctx, w, h, activeProgress, hoverProgress, pulse) {
+function paintWsPill(canvas, activeProgress, hoverProgress, pulse) {
+    var ctx = canvas.getContext("2d")
+    var w = canvas.width, h = canvas.height
     ctx.clearRect(0, 0, w, h)
     var cut = 6
     var ap = activeProgress
@@ -154,7 +168,8 @@ function paintWsPill(ctx, w, h, activeProgress, hoverProgress, pulse) {
         drawShape()
         ctx.save()
         ctx.clip()
-        var innerGlow = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) * 0.75)
+        var gc = glowCenter(canvas, w, h)
+        var innerGlow = ctx.createRadialGradient(gc.x, gc.y, 0, gc.x, gc.y, Math.max(w, h) * 0.85)
         innerGlow.addColorStop(0, "rgba(210,255,255," + (glowAmount * 0.55) + ")")
         innerGlow.addColorStop(0.6, "rgba(150,245,245," + (glowAmount * 0.25) + ")")
         innerGlow.addColorStop(1, "rgba(150,245,245,0.0)")
