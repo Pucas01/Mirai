@@ -85,7 +85,7 @@ Window {
         }
     }
 
-    PanelBackground {
+    PopupCard {
         id: weatherRect
         anchors.fill: parent
 

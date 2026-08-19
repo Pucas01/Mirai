@@ -1290,12 +1290,26 @@ Variants {
                         }
 
                         Rectangle {
+                            id: wsDot
                             anchors.centerIn: parent
                             width: modelData.active ? 8 : 5
                             height: modelData.active ? 8 : 5
                             radius: height / 2
-                            color: modelData.active ? "#39c5bb" : "#484848"
+                            color: modelData.active ? "#39c5bb" : (pill.hoverProgress > 0 ? "#7a7a7a" : "#484848")
                             visible: !occupied
+                            Behavior on color { ColorAnimation { duration: 130 } }
+
+                            layer.enabled: true
+                            layer.effect: MultiEffect {
+                                shadowEnabled: true
+                                shadowColor: wsDot.color
+                                shadowBlur: modelData.active ? 0.7 : 0.5
+                                shadowOpacity: modelData.active ? 0.9 : (0.35 + pill.hoverProgress * 0.25)
+                                shadowHorizontalOffset: 0
+                                shadowVerticalOffset: 0
+                                blurMax: modelData.active ? 20 : 12
+                                autoPaddingEnabled: true
+                            }
                         }
 
                         MouseArea {

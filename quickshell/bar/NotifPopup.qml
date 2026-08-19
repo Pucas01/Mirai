@@ -61,7 +61,7 @@ Window {
         return order.map(k => byApp[k])
     }
 
-    PanelBackground {
+    PopupCard {
         id: notifRect
         anchors.fill: parent
 

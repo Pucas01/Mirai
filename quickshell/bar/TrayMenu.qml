@@ -50,7 +50,7 @@ Window {
         menu: trayMenuWin.targetItem ? trayMenuWin.targetItem.menu : null
     }
 
-    PanelBackground {
+    PopupCard {
         id: menuRect
         anchors.fill: parent
 

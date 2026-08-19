@@ -236,7 +236,7 @@ Window {
         }
     }
 
-    PanelBackground {
+    PopupCard {
         id: netRect
         anchors.fill: parent
 

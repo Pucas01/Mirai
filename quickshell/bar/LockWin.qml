@@ -266,21 +266,86 @@ Item {
                         anchors.centerIn: parent
                         spacing: 6
 
-                        Text {
+                        Item {
+                            id: clockPill
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: Qt.formatDateTime(clockTimer.now, "hh:mm")
-                            color: "#ffffff"
-                            font.pixelSize: 64; font.family: "Orbitron"
+                            width: clockPillContent.width + 64
+                            height: clockPillContent.height + 32
+
+                            Canvas {
+                                id: clockPillCanvas
+                                anchors.fill: parent
+                                onWidthChanged: requestPaint()
+                                onHeightChanged: requestPaint()
+                                onPaint: DivaPaint.paintFacetPill(clockPillCanvas, 0.0, 12)
+                            }
+
+                            Column {
+                                id: clockPillContent
+                                anchors.centerIn: parent
+                                spacing: 6
+
+                                Item {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    width: clockText.width; height: clockText.height
+
+                                    Text {
+                                        id: clockGlow
+                                        anchors.centerIn: parent
+                                        text: clockText.text
+                                        color: "#39c5bb"
+                                        font: clockText.font
+                                        opacity: 0.45
+
+                                        layer.enabled: true
+                                        layer.effect: MultiEffect {
+                                            shadowEnabled: true
+                                            shadowColor: "#39c5bb"
+                                            shadowBlur: 0.8
+                                            shadowOpacity: 0.6
+                                            shadowHorizontalOffset: 0
+                                            shadowVerticalOffset: 0
+                                            blurMax: 32
+                                            autoPaddingEnabled: true
+                                        }
+                                    }
+
+                                    Text {
+                                        id: clockText
+                                        text: Qt.formatDateTime(clockTimer.now, "hh:mm")
+                                        color: "#ffffff"
+                                        font.pixelSize: 64; font.family: "Orbitron"
+                                    }
+                                }
+
+                                Row {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    spacing: 8
+
+                                    Rectangle {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: 14; height: 1
+                                        color: "#1f8a82"
+                                    }
+
+                                    Text {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: Qt.formatDateTime(clockTimer.now, "dddd, MMMM d").toUpperCase()
+                                        color: "#5fd6cc"
+                                        font.pixelSize: 12; font.family: "monospace"
+                                        font.letterSpacing: 1.5
+                                    }
+
+                                    Rectangle {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: 14; height: 1
+                                        color: "#1f8a82"
+                                    }
+                                }
+                            }
                         }
 
-                        Text {
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            text: Qt.formatDateTime(clockTimer.now, "dddd, MMMM d")
-                            color: "#39c5bb"
-                            font.pixelSize: 16; font.family: "monospace"
-                        }
-
-                        Item { width: 1; height: 30 }
+                        Item { width: 1; height: 26 }
 
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -311,8 +376,9 @@ Item {
                                 }
                                 onPaint: {
                                     var ctx = getContext("2d")
-                                    ctx.clearRect(0, 0, width, height)
-                                    var cut = 8, w = width, h = height, fp = pwBox.focusProgress
+                                    var w = width, h = height, fp = pwBox.focusProgress, cut = 8
+                                    ctx.clearRect(0, 0, w, h)
+
                                     function drawShape() {
                                         ctx.beginPath()
                                         ctx.moveTo(cut, 0)
@@ -323,26 +389,35 @@ Item {
                                         ctx.lineTo(0,       cut)
                                         ctx.closePath()
                                     }
+
                                     drawShape()
                                     var base = ctx.createLinearGradient(0, 0, 0, h)
-                                    base.addColorStop(0,    "#3d3d3d")
-                                    base.addColorStop(0.08, "#2a2a2a")
-                                    base.addColorStop(0.5,  "#303030")
-                                    base.addColorStop(1.0,  "#3a3a3a")
+                                    base.addColorStop(0,    "#242424")
+                                    base.addColorStop(0.5,  "#1c1c1c")
+                                    base.addColorStop(1.0,  "#181818")
                                     ctx.fillStyle = base
                                     ctx.fill()
+
                                     if (fp > 0 && !lockRoot.isError) {
                                         drawShape()
-                                        var teal = ctx.createLinearGradient(0, 0, 0, h)
-                                        teal.addColorStop(0,    "#80e0e0")
-                                        teal.addColorStop(0.08, "#39c5bb")
-                                        teal.addColorStop(0.5,  "#2a8a8a")
-                                        teal.addColorStop(1.0,  "#3a6a6a")
-                                        ctx.globalAlpha = fp * 0.18
-                                        ctx.fillStyle = teal
-                                        ctx.fill()
-                                        ctx.globalAlpha = 1.0
+                                        ctx.save()
+                                        ctx.clip()
+                                        ctx.lineWidth = 6
+                                        ctx.strokeStyle = "rgba(150,245,245," + (fp * 0.35) + ")"
+                                        ctx.stroke()
+                                        ctx.restore()
                                     }
+
+                                    if (lockRoot.isError) {
+                                        drawShape()
+                                        ctx.save()
+                                        ctx.clip()
+                                        ctx.lineWidth = 6
+                                        ctx.strokeStyle = "rgba(255,107,107,0.35)"
+                                        ctx.stroke()
+                                        ctx.restore()
+                                    }
+
                                     ctx.beginPath()
                                     ctx.moveTo(cut, 0)
                                     ctx.lineTo(w,   0)
@@ -351,16 +426,22 @@ Item {
                                     ctx.lineTo(0,   cut)
                                     ctx.closePath()
                                     var gloss = ctx.createLinearGradient(0, 0, 0, h * 0.55)
-                                    gloss.addColorStop(0, "rgba(255,255,255,0.12)")
+                                    gloss.addColorStop(0, "rgba(255,255,255," + (0.05 + fp * 0.03) + ")")
                                     gloss.addColorStop(1, "rgba(255,255,255,0.00)")
                                     ctx.fillStyle = gloss
                                     ctx.fill()
-                                    ctx.beginPath()
-                                    ctx.moveTo(cut, 0.5)
-                                    ctx.lineTo(w,   0.5)
-                                    ctx.strokeStyle = lockRoot.isError ? "#ff6b6b" : (fp > 0.5 ? "#c0f4f4" : "#646464")
+
+                                    drawShape()
+                                    ctx.strokeStyle = lockRoot.isError ? "#ff6b6b" : (fp > 0.5 ? "#c0f4f4" : "#3a3a3a")
                                     ctx.lineWidth = 1
                                     ctx.stroke()
+
+                                    if (fp > 0 && !lockRoot.isError) {
+                                        drawShape()
+                                        ctx.strokeStyle = "rgba(150,245,245," + (fp * 0.9) + ")"
+                                        ctx.lineWidth = 1.4
+                                        ctx.stroke()
+                                    }
                                 }
                             }
 

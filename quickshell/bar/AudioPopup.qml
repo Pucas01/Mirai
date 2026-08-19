@@ -1,6 +1,8 @@
 import QtQuick
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Services.Pipewire
+import "./DivaPaint.js" as DivaPaint
 
 Window {
     id: audioPopup
@@ -45,8 +47,10 @@ Window {
         : []
 
     component VolumeSlider: Item {
+        id: volSlider
         property real value: 0
         property bool muted: false
+        readonly property bool hovered: sliderArea.containsMouse || sliderArea.pressed
         signal moved(real v)
         height: 20
 
@@ -55,19 +59,48 @@ Window {
             anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter }
             height: 5
             radius: 2.5
-            color: "#2a2a2a"
+            color: "#1c1c1c"
+            border.color: "#333333"
+            border.width: 1
 
             Rectangle {
-                width: sliderTrack.width * Math.max(0, Math.min(1, parent.parent.value))
+                id: sliderFill
+                width: sliderTrack.width * Math.max(0, Math.min(1, volSlider.value))
                 height: parent.height
                 radius: parent.radius
-                color: parent.parent.muted ? "#555555" : "#39c5bb"
+                color: volSlider.muted ? "#555555" : "#39c5bb"
                 Behavior on width { NumberAnimation { duration: 60 } }
+
+                layer.enabled: !volSlider.muted
+                layer.effect: MultiEffect {
+                    shadowEnabled: true
+                    shadowColor: "#39c5bb"
+                    shadowBlur: volSlider.hovered ? 0.7 : 0.4
+                    shadowOpacity: volSlider.hovered ? 0.85 : 0.45
+                    shadowHorizontalOffset: 0
+                    shadowVerticalOffset: 0
+                    blurMax: volSlider.hovered ? 20 : 10
+                    autoPaddingEnabled: true
+                }
+            }
+
+            Rectangle {
+                id: sliderThumb
+                x: sliderFill.width - width / 2
+                anchors.verticalCenter: parent.verticalCenter
+                width: 11; height: 11; radius: 5.5
+                color: "#ffffff"
+                border.color: volSlider.muted ? "#555555" : "#39c5bb"
+                border.width: 1.5
+                scale: volSlider.hovered ? 1.0 : 0.0
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutBack; easing.overshoot: 1.4 } }
             }
         }
 
         MouseArea {
+            id: sliderArea
             anchors { fill: parent; margins: -4 }
+            hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             function updateFromX(mx) {
                 audioPopup.markSliderActive()
@@ -84,14 +117,26 @@ Window {
     }
 
     component MuteBtn: Item {
+        id: muteBtn
         property bool muted: false
         signal toggled()
         width: 26; height: 26
 
+        Canvas {
+            id: muteBtnCanvas
+            anchors.fill: parent
+            property real hp: 0.0
+            Behavior on hp { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+            onHpChanged: requestPaint()
+            onWidthChanged: requestPaint()
+            onHeightChanged: requestPaint()
+            onPaint: DivaPaint.paintFacetPill(muteBtnCanvas, hp, 5, muteBtn.muted ? DivaPaint.ACCENT_RED : DivaPaint.ACCENT_TEAL)
+        }
+
         Text {
             anchors.centerIn: parent
-            text: parent.muted ? "󰝟" : "󰕾"
-            color: muteArea.containsMouse ? "#ffffff" : (parent.muted ? "#ff6b6b" : "#999999")
+            text: muteBtn.muted ? "󰝟" : "󰕾"
+            color: muteArea.containsMouse ? "#ffffff" : (muteBtn.muted ? "#ff8a8a" : "#999999")
             font.pixelSize: 15
             Behavior on color { ColorAnimation { duration: 100 } }
         }
@@ -101,7 +146,8 @@ Window {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: parent.toggled()
+            onContainsMouseChanged: muteBtnCanvas.hp = containsMouse ? 1.0 : 0.0
+            onClicked: muteBtn.toggled()
         }
     }
 
@@ -145,7 +191,7 @@ Window {
         }
     }
 
-    PanelBackground {
+    Item {
         id: audioRect
         anchors.fill: parent
 
@@ -162,6 +208,56 @@ Window {
             Scale { origin.x: audioRect.width / 2; origin.y: 0; xScale: audioRect.scaleVal; yScale: audioRect.scaleVal },
             Translate { y: audioRect.slideY }
         ]
+
+        Canvas {
+            id: audioCardCanvas
+            anchors.fill: parent
+            onWidthChanged: requestPaint()
+            onHeightChanged: requestPaint()
+            onPaint: {
+                var ctx = getContext("2d")
+                var w = width, h = height, cut = 12
+                ctx.clearRect(0, 0, w, h)
+
+                function drawShape() {
+                    ctx.beginPath()
+                    ctx.moveTo(cut, 0); ctx.lineTo(w, 0)
+                    ctx.lineTo(w, h - cut); ctx.lineTo(w - cut, h)
+                    ctx.lineTo(0, h); ctx.lineTo(0, cut); ctx.closePath()
+                }
+
+                drawShape()
+                var base = ctx.createLinearGradient(0, 0, 0, h)
+                base.addColorStop(0, "#242424"); base.addColorStop(0.5, "#1c1c1c"); base.addColorStop(1.0, "#181818")
+                ctx.fillStyle = base; ctx.fill()
+
+                drawShape()
+                ctx.save()
+                ctx.clip()
+                ctx.lineWidth = 6
+                ctx.strokeStyle = "rgba(150,245,245,0.35)"
+                ctx.stroke()
+                ctx.restore()
+
+                ctx.beginPath()
+                ctx.moveTo(cut, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h * 0.5)
+                ctx.lineTo(0, h * 0.5); ctx.lineTo(0, cut); ctx.closePath()
+                var gloss = ctx.createLinearGradient(0, 0, 0, h * 0.5)
+                gloss.addColorStop(0, "rgba(255,255,255,0.08)")
+                gloss.addColorStop(1, "rgba(255,255,255,0.00)")
+                ctx.fillStyle = gloss; ctx.fill()
+
+                drawShape()
+                ctx.strokeStyle = "#c0f4f4"
+                ctx.lineWidth = 1
+                ctx.stroke()
+
+                drawShape()
+                ctx.strokeStyle = "rgba(150,245,245,0.9)"
+                ctx.lineWidth = 1.4
+                ctx.stroke()
+            }
+        }
 
         Column {
             anchors { fill: parent; margins: 1 }
@@ -208,38 +304,71 @@ Window {
                 delegate: Item {
                     id: streamRow
                     required property var modelData
+                    property string appName: streamRow.modelData.properties["application.name"] || streamRow.modelData.description || streamRow.modelData.name
+                    property var appEntry: DesktopEntries.heuristicLookup(streamRow.appName)
                     width: ListView.view.width
-                    height: 44
+                    height: 48
+
+                    Rectangle {
+                        anchors { left: parent.left; top: parent.top; leftMargin: 10; topMargin: 4 }
+                        width: 20; height: 20
+                        radius: 4
+                        color: "#1c1c1c"
+                        border.color: "#333333"
+                        border.width: 1
+
+                        Image {
+                            anchors.centerIn: parent
+                            width: 14; height: 14
+                            source: streamRow.appEntry && streamRow.appEntry.icon !== "" ? "image://icon/" + streamRow.appEntry.icon : ""
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            visible: !streamRow.appEntry || streamRow.appEntry.icon === ""
+                            text: "󰝚"
+                            color: "#666666"
+                            font.pixelSize: 10
+                        }
+                    }
 
                     Text {
-                        anchors { left: parent.left; top: parent.top; leftMargin: 14; topMargin: 4; right: parent.right; rightMargin: 14 }
-                        text: streamRow.modelData.properties["application.name"] || streamRow.modelData.description || streamRow.modelData.name
+                        anchors { left: parent.left; top: parent.top; leftMargin: 36; topMargin: 4; right: parent.right; rightMargin: 14 }
+                        text: streamRow.appName
                         color: "#cccccc"
                         font.pixelSize: 10; font.family: "monospace"
                         elide: Text.ElideRight
                     }
 
-                    MuteBtn {
-                        anchors { left: parent.left; bottom: parent.bottom; leftMargin: 10; bottomMargin: 2 }
-                        width: 22; height: 18
-                        muted: streamRow.modelData.audio ? streamRow.modelData.audio.muted : false
-                        onToggled: if (streamRow.modelData.audio) streamRow.modelData.audio.muted = !streamRow.modelData.audio.muted
-                    }
+                    Item {
+                        id: streamControlRow
+                        anchors { left: parent.left; right: parent.right; bottom: parent.bottom; bottomMargin: 6 }
+                        height: 20
 
-                    VolumeSlider {
-                        anchors { left: parent.left; right: parent.right; bottom: parent.bottom; leftMargin: 38; rightMargin: 44; bottomMargin: 5 }
-                        value: streamRow.modelData.audio ? streamRow.modelData.audio.volume : 0
-                        muted: streamRow.modelData.audio ? streamRow.modelData.audio.muted : false
-                        onMoved: v => { if (streamRow.modelData.audio) streamRow.modelData.audio.volume = v }
-                    }
+                        MuteBtn {
+                            anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 10 }
+                            width: 22; height: 18
+                            muted: streamRow.modelData.audio ? streamRow.modelData.audio.muted : false
+                            onToggled: if (streamRow.modelData.audio) streamRow.modelData.audio.muted = !streamRow.modelData.audio.muted
+                        }
 
-                    Text {
-                        anchors { right: parent.right; bottom: parent.bottom; rightMargin: 14; bottomMargin: 5 }
-                        width: 34
-                        horizontalAlignment: Text.AlignRight
-                        text: streamRow.modelData.audio ? Math.round(streamRow.modelData.audio.volume * 100) + "%" : "--"
-                        color: "#666666"
-                        font.pixelSize: 9; font.family: "monospace"
+                        VolumeSlider {
+                            anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; leftMargin: 38; rightMargin: 44 }
+                            value: streamRow.modelData.audio ? streamRow.modelData.audio.volume : 0
+                            muted: streamRow.modelData.audio ? streamRow.modelData.audio.muted : false
+                            onMoved: v => { if (streamRow.modelData.audio) streamRow.modelData.audio.volume = v }
+                        }
+
+                        Text {
+                            anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 14 }
+                            width: 34
+                            horizontalAlignment: Text.AlignRight
+                            text: streamRow.modelData.audio ? Math.round(streamRow.modelData.audio.volume * 100) + "%" : "--"
+                            color: "#666666"
+                            font.pixelSize: 9; font.family: "monospace"
+                        }
                     }
                 }
 

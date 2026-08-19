@@ -227,7 +227,7 @@ Window {
         }
     }
 
-    PanelBackground {
+    PopupCard {
         anchors.fill: parent
 
         Item {

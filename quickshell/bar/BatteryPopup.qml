@@ -42,7 +42,7 @@ Window {
         return name.split("-").map(function(w) { return w.charAt(0).toUpperCase() + w.slice(1) }).join(" ")
     }
 
-    PanelBackground {
+    PopupCard {
         id: batteryRect
         anchors.fill: parent
 

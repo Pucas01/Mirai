@@ -65,7 +65,7 @@ Window {
 
     Timer { id: ssSaveCloseTimer; interval: 600; onTriggered: { screenshotWin.isOpen = false; ssHideTimer.start() } }
 
-    PanelBackground {
+    PopupCard {
         id: ssRect
         anchors.fill: parent
 

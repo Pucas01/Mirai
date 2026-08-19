@@ -15,8 +15,9 @@ Window {
     color: "transparent"
     readonly property int speakerSize: 196
     readonly property int infoWidth: 210
-    width: speakerSize + infoWidth + 2
-    height: speakerSize + 2
+    readonly property int contentPadding: 10
+    width: speakerSize + infoWidth + 2 + contentPadding * 2
+    height: speakerSize + 2 + contentPadding * 2
     visible: false
 
     function open(x, y) {
@@ -70,7 +71,7 @@ Window {
         return m + ":" + (s < 10 ? "0" : "") + s
     }
 
-    PanelBackground {
+    PopupCard {
         id: mediaRect
         anchors.fill: parent
 
@@ -92,7 +93,7 @@ Window {
         Row {
             id: mediaContent
             anchors.fill: parent
-            anchors.margins: 1
+            anchors.margins: mediaPopup.contentPadding
             spacing: 0
 
             Rectangle {
@@ -229,16 +230,10 @@ Window {
 
             }
 
-            Rectangle {
+            Item {
                 id: infoPanel
                 width: mediaPopup.infoWidth
                 height: mediaPopup.speakerSize
-                gradient: Gradient {
-                    orientation: Gradient.Vertical
-                    GradientStop { position: 0.0;  color: "#242424" }
-                    GradientStop { position: 0.15; color: "#1e1e1e" }
-                    GradientStop { position: 1.0;  color: "#151515" }
-                }
 
                 property real hoverProgress: 0.0
                 Behavior on hoverProgress { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }

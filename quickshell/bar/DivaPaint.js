@@ -1,7 +1,8 @@
 .pragma library
 
-var ACCENT_TEAL = { hi: "128,224,224", mid: "57,197,187", lo: "42,138,138", dk: "58,106,106", edge: "#c0f4f4", edgeGlow: "150,240,240", glowHi: "210,255,255", glowMid: "150,245,245" }
-var ACCENT_RED  = { hi: "240,128,128", mid: "224,80,80",  lo: "204,68,68",  dk: "106,42,42",  edge: "#ffc0c0", edgeGlow: "255,150,150", glowHi: "255,210,210", glowMid: "255,150,150" }
+var ACCENT_TEAL  = { hi: "128,224,224", mid: "57,197,187", lo: "42,138,138", dk: "58,106,106", edge: "#c0f4f4", edgeGlow: "150,240,240", glowHi: "210,255,255", glowMid: "150,245,245" }
+var ACCENT_RED   = { hi: "240,128,128", mid: "224,80,80",  lo: "204,68,68",  dk: "106,42,42",  edge: "#ffc0c0", edgeGlow: "255,150,150", glowHi: "255,210,210", glowMid: "255,150,150" }
+var ACCENT_AMBER = { hi: "255,224,140", mid: "245,197,66", lo: "196,148,32", dk: "110,84,32",  edge: "#ffe9b0", edgeGlow: "255,214,120", glowHi: "255,236,180", glowMid: "255,214,120" }
 
 function facetShape(ctx, w, h, cut) {
     ctx.beginPath()

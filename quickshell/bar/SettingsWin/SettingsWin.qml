@@ -412,6 +412,7 @@ Window {
 
     PanelBackground {
         anchors.fill: parent
+        showBorder: false
 
         Item {
             id: titleBar
