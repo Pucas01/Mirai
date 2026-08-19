@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Qt.labs.folderlistmodel
+import "../DivaPaint.js" as DivaPaint
 
 Item {
     id: customizationSection
@@ -142,14 +143,36 @@ Item {
                             width: 108; height: 108
                             readonly property bool selected: settingsWin.pfpPath === model.filePath
 
+                            Canvas {
+                                id: pfpCellCanvas
+                                anchors.fill: parent
+                                anchors.margins: 2
+                                property real hoverProgress: 0.0
+                                property real activeProgress: pfpTileRoot.selected ? 1.0 : 0.0
+                                property real mx: 0.5
+                                property real my: 0.5
+                                Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                Behavior on activeProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                                Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                                onHoverProgressChanged: requestPaint()
+                                onActiveProgressChanged: requestPaint()
+                                onMxChanged: requestPaint()
+                                onMyChanged: requestPaint()
+                                onWidthChanged: requestPaint()
+                                onHeightChanged: requestPaint()
+                                onPaint: DivaPaint.paintFacetPill(pfpCellCanvas, Math.max(hoverProgress, activeProgress), 8)
+                            }
+
                             Item {
                                 id: pfpTile
                                 anchors.fill: parent
-                                anchors.margins: 8
+                                anchors.margins: 14
 
                                 Rectangle {
                                     anchors.fill: parent
-                                    color: "#242424"
+                                    radius: width / 2
+                                    color: "#181818"
                                 }
 
                                 Image {
@@ -188,20 +211,26 @@ Item {
                                         ctx.restore()
                                     }
                                 }
-                            }
 
-                            Rectangle {
-                                z: 10
-                                anchors.fill: pfpTile
-                                radius: width / 2
-                                color: "transparent"
-                                border.color: pfpTileRoot.selected ? "#39c5bb" : "#2a2a2a"
-                                border.width: pfpTileRoot.selected ? 2 : 1
+                                Rectangle {
+                                    z: 10
+                                    anchors.fill: parent
+                                    radius: width / 2
+                                    color: "transparent"
+                                    border.color: pfpTileRoot.selected ? "#39c5bb" : "transparent"
+                                    border.width: 2
+                                }
                             }
 
                             MouseArea {
-                                anchors.fill: pfpTile
+                                anchors.fill: pfpCellCanvas
+                                hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
+                                onContainsMouseChanged: pfpCellCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                                onPositionChanged: mouse => {
+                                    pfpCellCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                                    pfpCellCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                                }
                                 onClicked: settingsWin.setPfp(model.filePath)
                             }
                         }
@@ -254,58 +283,87 @@ Item {
                             width: 64; height: 64
                             readonly property bool selected: settingsWin.startIconPath === model.filePath
 
-                            Rectangle {
+                            Canvas {
+                                id: startIconCanvas
                                 anchors.fill: parent
-                                color: "#242424"
+                                property real hoverProgress: 0.0
+                                property real activeProgress: startIconTile.selected ? 1.0 : 0.0
+                                property real mx: 0.5
+                                property real my: 0.5
+                                Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                Behavior on activeProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                                Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                                onHoverProgressChanged: requestPaint()
+                                onActiveProgressChanged: requestPaint()
+                                onMxChanged: requestPaint()
+                                onMyChanged: requestPaint()
+                                onWidthChanged: requestPaint()
+                                onHeightChanged: requestPaint()
+                                onPaint: DivaPaint.paintFacetPill(startIconCanvas, Math.max(hoverProgress, activeProgress), 6)
                             }
 
                             Image {
-                                anchors { fill: parent; margins: 8 }
+                                anchors { fill: parent; margins: 12 }
                                 source: "file://" + model.filePath
                                 fillMode: Image.PreserveAspectFit
                                 asynchronous: true
                                 smooth: true
                             }
 
-                            Rectangle {
-                                anchors.fill: parent
-                                color: "transparent"
-                                border.color: startIconTile.selected ? "#39c5bb" : "#2a2a2a"
-                                border.width: startIconTile.selected ? 2 : 1
-                            }
-
                             MouseArea {
                                 anchors.fill: parent
+                                hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
+                                onContainsMouseChanged: startIconCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                                onPositionChanged: mouse => {
+                                    startIconCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                                    startIconCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                                }
                                 onClicked: settingsWin.setStartIconImage(model.filePath)
                             }
                         }
 
                         header: Item {
+                            id: startIconDefaultTile
                             width: 64; height: 64
                             readonly property bool selected: settingsWin.startIconPath === ""
 
-                            Rectangle {
+                            Canvas {
+                                id: startIconDefaultCanvas
                                 anchors.fill: parent
-                                color: "#242424"
+                                property real hoverProgress: 0.0
+                                property real activeProgress: startIconDefaultTile.selected ? 1.0 : 0.0
+                                property real mx: 0.5
+                                property real my: 0.5
+                                Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                Behavior on activeProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                                Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                                onHoverProgressChanged: requestPaint()
+                                onActiveProgressChanged: requestPaint()
+                                onMxChanged: requestPaint()
+                                onMyChanged: requestPaint()
+                                onWidthChanged: requestPaint()
+                                onHeightChanged: requestPaint()
+                                onPaint: DivaPaint.paintFacetPill(startIconDefaultCanvas, Math.max(hoverProgress, activeProgress), 6)
                             }
 
                             Text {
                                 anchors.centerIn: parent
                                 text: settingsWin.defaultStartIcon
-                                color: "#39c5bb"
+                                color: startIconDefaultTile.selected ? "#0a1a1a" : "#39c5bb"
                                 font.pixelSize: 22
-                            }
-
-                            Rectangle {
-                                anchors.fill: parent
-                                color: "transparent"
-                                border.color: parent.selected ? "#39c5bb" : "#2a2a2a"
-                                border.width: parent.selected ? 2 : 1
                             }
 
                             MouseArea {
                                 anchors.fill: parent
+                                hoverEnabled: true
+                                onContainsMouseChanged: startIconDefaultCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                                onPositionChanged: mouse => {
+                                    startIconDefaultCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                                    startIconDefaultCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                                }
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: settingsWin.setStartIconImage("")
                             }
@@ -332,7 +390,8 @@ Item {
             SectionCard {
                 title: "fastfetch logo"
                 path: customizationSection.logoDir
-                status: customizationSection.logoDir
+                status: customizationSection.logoPath !== "" ? customizationSection.logoPath.split("/").pop() : "default"
+                statusColor: customizationSection.logoPath !== "" ? "#39c5bb" : "#444444"
                 onFolderClicked: {
                     customizationSection.ensureDir()
                     openLogoDirProc.running = false
@@ -355,36 +414,45 @@ Item {
                             width: 108; height: 108
                             readonly property bool selected: customizationSection.logoPath === model.filePath
 
-                            Item {
-                                id: logoTile
+                            Canvas {
+                                id: logoCellCanvas
                                 anchors.fill: parent
-                                anchors.margins: 8
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    color: "#242424"
-                                }
-
-                                Image {
-                                    anchors.fill: parent
-                                    source: "file://" + model.filePath
-                                    fillMode: Image.PreserveAspectFit
-                                    asynchronous: true
-                                    smooth: true
-                                }
+                                anchors.margins: 2
+                                property real hoverProgress: 0.0
+                                property real activeProgress: logoTileRoot.selected ? 1.0 : 0.0
+                                property real mx: 0.5
+                                property real my: 0.5
+                                Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                Behavior on activeProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                                Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                                onHoverProgressChanged: requestPaint()
+                                onActiveProgressChanged: requestPaint()
+                                onMxChanged: requestPaint()
+                                onMyChanged: requestPaint()
+                                onWidthChanged: requestPaint()
+                                onHeightChanged: requestPaint()
+                                onPaint: DivaPaint.paintFacetPill(logoCellCanvas, Math.max(hoverProgress, activeProgress), 8)
                             }
 
-                            Rectangle {
-                                z: 10
-                                anchors.fill: logoTile
-                                color: "transparent"
-                                border.color: logoTileRoot.selected ? "#39c5bb" : "#2a2a2a"
-                                border.width: logoTileRoot.selected ? 2 : 1
+                            Image {
+                                anchors.fill: parent
+                                anchors.margins: 16
+                                source: "file://" + model.filePath
+                                fillMode: Image.PreserveAspectFit
+                                asynchronous: true
+                                smooth: true
                             }
 
                             MouseArea {
-                                anchors.fill: logoTile
+                                anchors.fill: logoCellCanvas
+                                hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
+                                onContainsMouseChanged: logoCellCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                                onPositionChanged: mouse => {
+                                    logoCellCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                                    logoCellCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                                }
                                 onClicked: customizationSection.setLogo(model.filePath)
                             }
                         }
@@ -444,9 +512,24 @@ Item {
                             width: 92; height: 92
                             readonly property bool selected: settingsWin.cursorTheme === modelData
 
-                            Rectangle {
+                            Canvas {
+                                id: cursorThemeCanvas
                                 anchors.fill: parent
-                                color: "#242424"
+                                property real hoverProgress: 0.0
+                                property real activeProgress: cursorThemeTile.selected ? 1.0 : 0.0
+                                property real mx: 0.5
+                                property real my: 0.5
+                                Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                Behavior on activeProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                                Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                                onHoverProgressChanged: requestPaint()
+                                onActiveProgressChanged: requestPaint()
+                                onMxChanged: requestPaint()
+                                onMyChanged: requestPaint()
+                                onWidthChanged: requestPaint()
+                                onHeightChanged: requestPaint()
+                                onPaint: DivaPaint.paintFacetPill(cursorThemeCanvas, Math.max(hoverProgress, activeProgress), 7)
                             }
 
                             Column {
@@ -469,8 +552,9 @@ Item {
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     width: 80
                                     text: modelData
-                                    color: cursorThemeTile.selected ? "#39c5bb" : "#999999"
+                                    color: cursorThemeTile.selected ? "#0a1a1a" : (cursorThemeArea.containsMouse ? "#ffffff" : "#999999")
                                     font.pixelSize: 9; font.family: "monospace"
+                                    font.bold: cursorThemeTile.selected
                                     horizontalAlignment: Text.AlignHCenter
                                     wrapMode: Text.WrapAnywhere
                                     elide: Text.ElideRight
@@ -478,16 +562,16 @@ Item {
                                 }
                             }
 
-                            Rectangle {
-                                anchors.fill: parent
-                                color: "transparent"
-                                border.color: cursorThemeTile.selected ? "#39c5bb" : "#2a2a2a"
-                                border.width: cursorThemeTile.selected ? 2 : 1
-                            }
-
                             MouseArea {
+                                id: cursorThemeArea
                                 anchors.fill: parent
+                                hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
+                                onContainsMouseChanged: cursorThemeCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                                onPositionChanged: mouse => {
+                                    cursorThemeCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                                    cursorThemeCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                                }
                                 onClicked: settingsWin.applyCursor(modelData, settingsWin.cursorSize)
                             }
                         }
@@ -522,26 +606,48 @@ Item {
                             model: [16, 24, 32, 48, 64]
 
                             Item {
+                                id: cursorSizeTile
                                 width: 34; height: 34
                                 readonly property bool selected: settingsWin.cursorSize === modelData
 
-                                Rectangle {
+                                Canvas {
+                                    id: cursorSizeCanvas
                                     anchors.fill: parent
-                                    color: "#242424"
-                                    border.color: parent.selected ? "#39c5bb" : "#2a2a2a"
-                                    border.width: parent.selected ? 2 : 1
+                                    property real hoverProgress: 0.0
+                                    property real activeProgress: cursorSizeTile.selected ? 1.0 : 0.0
+                                    property real mx: 0.5
+                                    property real my: 0.5
+                                    Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                    Behavior on activeProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                                    Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                                    Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                                    onHoverProgressChanged: requestPaint()
+                                    onActiveProgressChanged: requestPaint()
+                                    onMxChanged: requestPaint()
+                                    onMyChanged: requestPaint()
+                                    onWidthChanged: requestPaint()
+                                    onHeightChanged: requestPaint()
+                                    onPaint: DivaPaint.paintFacetPill(cursorSizeCanvas, Math.max(hoverProgress, activeProgress), 5)
                                 }
 
                                 Text {
                                     anchors.centerIn: parent
                                     text: modelData
-                                    color: parent.selected ? "#39c5bb" : "#999999"
+                                    color: cursorSizeTile.selected ? "#0a1a1a" : (cursorSizeArea.containsMouse ? "#ffffff" : "#999999")
                                     font.pixelSize: 10; font.family: "monospace"
+                                    font.bold: cursorSizeTile.selected
                                 }
 
                                 MouseArea {
+                                    id: cursorSizeArea
                                     anchors.fill: parent
+                                    hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
+                                    onContainsMouseChanged: cursorSizeCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                                    onPositionChanged: mouse => {
+                                        cursorSizeCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                                        cursorSizeCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                                    }
                                     onClicked: settingsWin.applyCursor(settingsWin.cursorTheme, modelData)
                                 }
                             }

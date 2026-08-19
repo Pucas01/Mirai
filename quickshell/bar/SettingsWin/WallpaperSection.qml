@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Io
 import Qt.labs.folderlistmodel
+import "../DivaPaint.js" as DivaPaint
 
 Item {
     id: wallpaperSection
@@ -22,7 +23,10 @@ Item {
 
     Process {
         id: wallpaperProc
-        command: ["awww", "img", settingsWin.appliedWallpaper]
+        command: ["awww", "img", settingsWin.appliedWallpaper,
+            "--transition-type", "grow",
+            "--transition-pos", "center",
+            "--transition-duration", "0.8"]
         running: false
     }
 
@@ -65,7 +69,8 @@ Item {
         width: parent.width - 32
         title: "wallpapers"
         path: settingsWin.wallpaperDir
-        status: settingsWin.wallpaperDir
+        status: settingsWin.appliedWallpaper !== "" ? settingsWin.appliedWallpaper.split("/").pop() : "none selected"
+        statusColor: settingsWin.appliedWallpaper !== "" ? "#39c5bb" : "#444444"
         onFolderClicked: {
             ensureWallpaperDirProc.running = false
             ensureWallpaperDirProc.running = true
@@ -85,46 +90,92 @@ Item {
                 model: wallpaperModel
 
                 delegate: Item {
+                    id: wpTileRoot
                     width: 160; height: 110
+                    readonly property bool selected: settingsWin.appliedWallpaper === model.filePath
 
-                    Rectangle {
+                    Item {
+                        id: wpTile
                         anchors.fill: parent
                         anchors.margins: 5
-                        color: "#242424"
-                        border.color: settingsWin.appliedWallpaper === model.filePath ? "#39c5bb" : "#2a2a2a"
-                        border.width: settingsWin.appliedWallpaper === model.filePath ? 2 : 1
-                        clip: true
 
-                        Image {
-                            anchors { fill: parent; bottomMargin: 20 }
-                            source: "file://" + model.filePath
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            smooth: true
+                        Canvas {
+                            id: wpTileCanvas
+                            anchors.fill: parent
+                            property real hoverProgress: 0.0
+                            property real activeProgress: wpTileRoot.selected ? 1.0 : 0.0
+                            property real mx: 0.5
+                            property real my: 0.5
+                            Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                            Behavior on activeProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                            Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                            Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                            onHoverProgressChanged: requestPaint()
+                            onActiveProgressChanged: requestPaint()
+                            onMxChanged: requestPaint()
+                            onMyChanged: requestPaint()
+                            onWidthChanged: requestPaint()
+                            onHeightChanged: requestPaint()
+                            onPaint: DivaPaint.paintFacetPill(wpTileCanvas, Math.max(hoverProgress, activeProgress), 8)
+                        }
+
+                        Item {
+                            anchors.fill: parent
+                            anchors.margins: 5
+                            clip: true
+
+                            Image {
+                                anchors { fill: parent; bottomMargin: 18 }
+                                source: "file://" + model.filePath
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                smooth: true
+                            }
+
+                            Rectangle {
+                                anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
+                                height: 18
+                                color: "#99000000"
+
+                                Text {
+                                    anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; leftMargin: 4; rightMargin: 4 }
+                                    text: model.fileName
+                                    color: wpTileRoot.selected ? "#8ff5f0" : "#cccccc"
+                                    font.pixelSize: 9; font.family: "monospace"
+                                    elide: Text.ElideRight
+                                }
+                            }
                         }
 
                         Rectangle {
-                            anchors { bottom: parent.bottom; left: parent.left; right: parent.right }
-                            height: 20
-                            color: "#99000000"
+                            visible: wpTileRoot.selected
+                            anchors { top: parent.top; right: parent.right; margins: 6 }
+                            width: 16; height: 16
+                            color: "#39c5bb"
 
                             Text {
-                                anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; leftMargin: 4; rightMargin: 4 }
-                                text: model.fileName
-                                color: "#cccccc"
-                                font.pixelSize: 9; font.family: "monospace"
-                                elide: Text.ElideRight
+                                anchors.centerIn: parent
+                                text: "✓"
+                                color: "#0a1a1a"
+                                font.pixelSize: 9; font.bold: true
                             }
                         }
+                    }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                settingsWin.appliedWallpaper = model.filePath
-                                wallpaperProc.running = false
-                                wallpaperProc.running = true
-                            }
+                    MouseArea {
+                        id: wpTileArea
+                        anchors.fill: wpTile
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onContainsMouseChanged: wpTileCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                        onPositionChanged: mouse => {
+                            wpTileCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                            wpTileCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                        }
+                        onClicked: {
+                            settingsWin.appliedWallpaper = model.filePath
+                            wallpaperProc.running = false
+                            wallpaperProc.running = true
                         }
                     }
                 }

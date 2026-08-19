@@ -202,6 +202,10 @@ Window {
             onMyChanged: requestPaint()
             onWidthChanged: requestPaint()
             onHeightChanged: requestPaint()
+            Connections {
+                target: btnCanvas.parent
+                function onActiveChanged() { btnCanvas.requestPaint() }
+            }
             onPaint: DivaPaint.paintFacetPill(btnCanvas, parent.active ? 1.0 : Math.max(hp, 0), 5)
         }
 

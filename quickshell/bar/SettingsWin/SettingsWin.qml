@@ -19,6 +19,7 @@ Window {
 
     property string section: "wallpaper"
     property string wallpaperDir: settingsWin.homeDir + "/Pictures/Mirai/Wallpapers"
+    property string wallpaperStatePath: settingsWin.homeDir + "/.cache/qs-wallpaper-path"
     property string appliedWallpaper: ""
 
     property string pfpDir: settingsWin.homeDir + "/Pictures/Mirai/Avatars"
@@ -152,7 +153,7 @@ Window {
 
     onSectionChanged: if (section === "monitors") refreshMonitors()
 
-    Component.onCompleted: { loadPfpProc.running = true; loadStartIconProc.running = true; loadCursorProc.running = true }
+    Component.onCompleted: { loadPfpProc.running = true; loadStartIconProc.running = true; loadCursorProc.running = true; loadWallpaperProc.running = true }
 
     readonly property string repoDir: Quickshell.shellPath("..")
     property bool updateAvailable: false
@@ -237,6 +238,15 @@ Window {
         id: openPfpDirProc
         command: ["nautilus", settingsWin.pfpDir]
         running: false
+    }
+
+    Process {
+        id: loadWallpaperProc
+        command: ["cat", settingsWin.wallpaperStatePath]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: { settingsWin.appliedWallpaper = text.trim() }
+        }
     }
 
     Process {

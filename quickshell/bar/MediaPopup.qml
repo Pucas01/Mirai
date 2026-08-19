@@ -159,8 +159,8 @@ Window {
                         source: Quickshell.shellPath("bar/assets/speaker_ring.svg")
                         sourceSize: Qt.size(width, height)
                         smooth: true
-                        scale: artArea.playing ? 1.0 + artArea.level * 0.22 : 1.0
-                        opacity: artArea.playing ? artArea.level * 0.7 : 0.0
+                        scale: artArea.playing ? 1.0 + artArea.level * 0.45 : 1.0
+                        opacity: artArea.playing ? artArea.level * 1.0 : 0.0
                         Behavior on scale { NumberAnimation { duration: 60; easing.type: Easing.OutCubic } }
                         Behavior on opacity { NumberAnimation { duration: 60; easing.type: Easing.OutCubic } }
                         z: 1
@@ -178,7 +178,7 @@ Window {
                         source: Quickshell.shellPath("bar/assets/speaker_ring.svg")
                         sourceSize: Qt.size(width, height)
                         smooth: true
-                        scale: artArea.playing ? 1.0 + artArea.level * 0.05 : 1.0
+                        scale: artArea.playing ? 1.0 + artArea.level * 0.14 : 1.0
                         Behavior on scale { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                         z: 2
                     }
