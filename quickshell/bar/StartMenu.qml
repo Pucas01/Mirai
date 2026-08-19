@@ -31,12 +31,19 @@ Window {
         icon: "xsi-github-symbolic",
         execute: function() { githubToggleProc.running = false; githubToggleProc.running = true }
     })
+    readonly property var reposEntry: ({
+        id: "repos",
+        name: "Repos",
+        genericName: "manage repos & submodules",
+        icon: "xsi-git-symbolic",
+        execute: function() { reposToggleProc.running = false; reposToggleProc.running = true }
+    })
 
     property var allApps: {
         try {
             return DesktopEntries.applications.values
                 .filter(e => e && !e.noDisplay && e.name !== "")
-                .concat([startMenuWin.kanadeEntry, startMenuWin.githubEntry])
+                .concat([startMenuWin.kanadeEntry, startMenuWin.githubEntry, startMenuWin.reposEntry])
                 .sort((a, b) => a.name.localeCompare(b.name))
         } catch(_) { return [] }
     }
@@ -80,6 +87,7 @@ Window {
     Process { id: lockProc; command: ["quickshell", "ipc", "call", "lock", "lock"] }
     Process { id: kanadeToggleProc; command: ["quickshell", "ipc", "call", "kanade", "toggle"] }
     Process { id: githubToggleProc; command: ["quickshell", "ipc", "call", "github", "toggle"] }
+    Process { id: reposToggleProc; command: ["quickshell", "ipc", "call", "repos", "toggle"] }
     Process { id: logoutProc; command: ["bash", "-c", "hyprctl dispatch exit"] }
     Process { id: rebootProc; command: ["systemctl", "reboot"] }
     Process { id: shutdownProc; command: ["systemctl", "poweroff"] }

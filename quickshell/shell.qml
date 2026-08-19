@@ -4,6 +4,7 @@ import Quickshell
 import "./bar"
 import "./bar/Kanade"
 import "./bar/GitHub"
+import "./bar/Repos"
 
 ShellRoot {
     Bar {}
@@ -12,4 +13,5 @@ ShellRoot {
     KeybindsPopup {}
     Kanade {}
     GitHub {}
+    Repos {}
 }
