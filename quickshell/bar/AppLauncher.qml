@@ -25,7 +25,16 @@ Window {
         execute: function() { kanadeToggleProc.running = false; kanadeToggleProc.running = true }
     })
 
-    readonly property var customEntries: [launcherWin.kanadeEntry]
+    readonly property var githubEntry: ({
+        id: "github",
+        name: "GitHub",
+        genericName: "look at your github stuff",
+        icon: "xsi-github-symbolic",
+        isCustom: true,
+        execute: function() { githubToggleProc.running = false; githubToggleProc.running = true }
+    })
+
+    readonly property var customEntries: [launcherWin.kanadeEntry, launcherWin.githubEntry]
 
     property var allApps: {
         try {
@@ -168,6 +177,12 @@ Window {
     Process {
         id: kanadeToggleProc
         command: ["quickshell", "ipc", "call", "kanade", "toggle"]
+        running: false
+    }
+
+    Process {
+        id: githubToggleProc
+        command: ["quickshell", "ipc", "call", "github", "toggle"]
         running: false
     }
 

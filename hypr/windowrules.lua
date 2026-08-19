@@ -67,3 +67,9 @@ hl.window_rule({
     match = { title = "kanade" },
     float = true,
 })
+
+hl.window_rule({
+    name  = "float-github",
+    match = { title = "github" },
+    float = true,
+})

@@ -24,12 +24,19 @@ Window {
         icon: "multimedia-player",
         execute: function() { kanadeToggleProc.running = false; kanadeToggleProc.running = true }
     })
+    readonly property var githubEntry: ({
+        id: "github",
+        name: "GitHub",
+        genericName: "look at your github stuff",
+        icon: "xsi-github-symbolic",
+        execute: function() { githubToggleProc.running = false; githubToggleProc.running = true }
+    })
 
     property var allApps: {
         try {
             return DesktopEntries.applications.values
                 .filter(e => e && !e.noDisplay && e.name !== "")
-                .concat([startMenuWin.kanadeEntry])
+                .concat([startMenuWin.kanadeEntry, startMenuWin.githubEntry])
                 .sort((a, b) => a.name.localeCompare(b.name))
         } catch(_) { return [] }
     }
@@ -72,6 +79,7 @@ Window {
 
     Process { id: lockProc; command: ["quickshell", "ipc", "call", "lock", "lock"] }
     Process { id: kanadeToggleProc; command: ["quickshell", "ipc", "call", "kanade", "toggle"] }
+    Process { id: githubToggleProc; command: ["quickshell", "ipc", "call", "github", "toggle"] }
     Process { id: logoutProc; command: ["bash", "-c", "hyprctl dispatch exit"] }
     Process { id: rebootProc; command: ["systemctl", "reboot"] }
     Process { id: shutdownProc; command: ["systemctl", "poweroff"] }
