@@ -73,9 +73,3 @@ hl.window_rule({
     match = { title = "github" },
     float = true,
 })
-
-hl.window_rule({
-    name  = "float-repos",
-    match = { title = "repos" },
-    float = true,
-})

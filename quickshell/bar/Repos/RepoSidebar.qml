@@ -62,7 +62,8 @@ Item {
             required property var modelData
             width: repoTree.width
             readonly property bool isActive: sidebar.reposWin.activeRepoRoot === modelData.path
-            readonly property var subs: repoBlock.isActive ? sidebar.reposWin.submodules : []
+            readonly property bool open: !!sidebar.reposWin.expandedRepos[modelData.path]
+            readonly property var subs: sidebar.reposWin.submoduleCache[modelData.path] || []
 
             Item {
                 id: repoRow
@@ -87,8 +88,26 @@ Item {
                 }
 
                 Row {
-                    anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 10; right: removeBtn.left; rightMargin: 4 }
-                    spacing: 7
+                    anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 6; right: removeBtn.left; rightMargin: 4 }
+                    spacing: 6
+
+                    Text {
+                        id: chevron
+                        text: "󰅂"
+                        color: "#39c5bb"
+                        font.pixelSize: 10
+                        rotation: repoBlock.open ? 90 : 0
+                        Behavior on rotation { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -6
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: sidebar.reposWin.toggleRepoExpanded(repoBlock.modelData.path)
+                        }
+                    }
                     Text {
                         text: "󰊢"
                         color: repoBlock.isActive ? "#ffffff" : "#888888"
@@ -96,7 +115,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     Text {
-                        width: parent.width - 20
+                        width: parent.width - 40
                         text: repoBlock.modelData.name
                         color: repoBlock.isActive ? "#ffffff" : "#cccccc"
                         font.pixelSize: 11; font.family: "monospace"
@@ -126,6 +145,7 @@ Item {
                 MouseArea {
                     id: repoRowArea
                     anchors.fill: parent
+                    anchors.leftMargin: 22
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onContainsMouseChanged: repoRowCanvas.hp = containsMouse ? 1.0 : 0.0
@@ -136,7 +156,7 @@ Item {
             Item {
                 id: subContainer
                 width: parent.width
-                height: repoBlock.isActive ? subColumn.implicitHeight : 0
+                height: repoBlock.open ? subColumn.implicitHeight : 0
                 clip: true
                 Behavior on height { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 

@@ -34,16 +34,7 @@ Window {
         execute: function() { githubToggleProc.running = false; githubToggleProc.running = true }
     })
 
-    readonly property var reposEntry: ({
-        id: "repos",
-        name: "Repos",
-        genericName: "manage repos & submodules",
-        icon: "xsi-git-symbolic",
-        isCustom: true,
-        execute: function() { reposToggleProc.running = false; reposToggleProc.running = true }
-    })
-
-    readonly property var customEntries: [launcherWin.kanadeEntry, launcherWin.githubEntry, launcherWin.reposEntry]
+    readonly property var customEntries: [launcherWin.kanadeEntry, launcherWin.githubEntry]
 
     property var allApps: {
         try {
@@ -192,12 +183,6 @@ Window {
     Process {
         id: githubToggleProc
         command: ["quickshell", "ipc", "call", "github", "toggle"]
-        running: false
-    }
-
-    Process {
-        id: reposToggleProc
-        command: ["quickshell", "ipc", "call", "repos", "toggle"]
         running: false
     }
 
