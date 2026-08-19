@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Widgets
 import Quickshell.Hyprland
@@ -411,9 +412,9 @@ Variants {
         }
 
         anchors { top: true; left: true; right: true }
-        implicitHeight: 50
+        implicitHeight: 56
         color: "transparent"
-        exclusiveZone: 46
+        exclusiveZone: 52
 
         TrayMenu {
             id: trayMenu
@@ -423,6 +424,7 @@ Variants {
             id: mediaPopup
             activePlayer: panel.activePlayer
             preferredPlayer: panel.preferredPlayer
+            cavaBars: panel.cavaBars
             onPreferredPlayerChanged: panel.preferredPlayer = mediaPopup.preferredPlayer
         }
 
@@ -506,7 +508,7 @@ Variants {
         Rectangle {
             id: barBg
             anchors { top: parent.top; left: parent.left; right: parent.right }
-            height: 46
+            height: 52
 
             gradient: Gradient {
                 orientation: Gradient.Vertical
@@ -549,13 +551,13 @@ Variants {
 
                 GlowButton {
                     id: networkItem
-                    width: 35; height: 30
+                    width: 39; height: 34
                     anchors.verticalCenter: parent.verticalCenter
 
                     Text {
                         anchors.centerIn: parent
                         text: panel.netType === "ethernet" ? "󰈀" : (panel.netType === "wifi" ? "󰤨" : "󰤭")
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         color: networkItem.hovered ? "#ffffff" : (panel.netConnected ? "#888888" : "#555555")
                         Behavior on color { ColorAnimation { duration: 130 } }
                     }
@@ -569,7 +571,7 @@ Variants {
 
                 Item {
                     id: audioItem
-                    width: 35; height: 30
+                    width: 39; height: 34
                     anchors.verticalCenter: parent.verticalCenter
 
                     PwObjectTracker {
@@ -596,7 +598,7 @@ Variants {
                     Text {
                         anchors.centerIn: parent
                         text: (Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio && Pipewire.defaultAudioSink.audio.muted) ? "󰝟" : "󰕾"
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         color: audioMouseArea.containsMouse ? "#ffffff" : "#888888"
                         Behavior on color { ColorAnimation { duration: 130 } }
                     }
@@ -627,8 +629,8 @@ Variants {
                 Item {
                     id: brightnessItem
                     visible: panel.brightnessAvailable
-                    width: panel.brightnessAvailable ? 35 : 0
-                    height: 30
+                    width: panel.brightnessAvailable ? 39 : 0
+                    height: 34
                     anchors.verticalCenter: parent.verticalCenter
 
                     Canvas {
@@ -651,7 +653,7 @@ Variants {
                     Text {
                         anchors.centerIn: parent
                         text: "󰃟"
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         color: brightnessMouseArea.containsMouse ? "#ffffff" : "#888888"
                         Behavior on color { ColorAnimation { duration: 130 } }
                     }
@@ -680,8 +682,8 @@ Variants {
                 Item {
                     id: batteryItem
                     visible: panel.batteryAvailable
-                    width: panel.batteryAvailable ? batteryRow.width + 16 : 0
-                    height: 30
+                    width: panel.batteryAvailable ? batteryRow.width + 20 : 0
+                    height: 34
                     anchors.verticalCenter: parent.verticalCenter
                     clip: true
                     Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
@@ -712,7 +714,7 @@ Variants {
                             anchors.verticalCenter: parent.verticalCenter
                             text: panel.batteryGlyph(panel.batteryPercent, panel.batteryStatus)
                             color: panel.batteryStatus === "Charging" ? "#39c5bb" : (panel.batteryPercent <= 15 ? "#ff6b6b" : (batteryMouseArea.containsMouse ? "#ffffff" : "#888888"))
-                            font.pixelSize: 14
+                            font.pixelSize: 16
                             Behavior on color { ColorAnimation { duration: 130 } }
                         }
 
@@ -745,7 +747,7 @@ Variants {
 
                 Item {
                     id: bellItem
-                    width: 35; height: 30
+                    width: 39; height: 34
                     anchors.verticalCenter: parent.verticalCenter
 
                     Canvas {
@@ -768,7 +770,7 @@ Variants {
                     Text {
                         anchors.centerIn: parent
                         text: "󰂚"
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         color: bellMouseArea.containsMouse ? "#ffffff" : shellRoot.globalNotifCount > 0 ? "#39c5bb" : "#888888"
                         Behavior on color { ColorAnimation { duration: 130 } }
                     }
@@ -903,8 +905,8 @@ Variants {
                 id: weatherItem
                 anchors { left: wsArea.right; verticalCenter: parent.verticalCenter; leftMargin: 10 }
                 visible: panel.weatherLoaded && !panel.isNarrow
-                width: visible ? weatherRow.width + 20 : 0
-                height: 30
+                width: visible ? weatherRow.width + 24 : 0
+                height: 34
 
                 Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
@@ -934,7 +936,7 @@ Variants {
                         anchors.verticalCenter: parent.verticalCenter
                         text: panel.weatherGlyph(panel.weatherCode)
                         color: weatherMouseArea.containsMouse ? "#ffffff" : "#999999"
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         Behavior on color { ColorAnimation { duration: 130 } }
                     }
 
@@ -969,8 +971,8 @@ Variants {
                 id: colorPickerItem
                 anchors { left: weatherItem.right; verticalCenter: parent.verticalCenter; leftMargin: 10 }
                 visible: !panel.isVeryNarrow
-                width: visible ? (panel.lastPickedColor !== "" ? colorPickerRow.width + 20 : 34) : 0
-                height: 30
+                width: visible ? (panel.lastPickedColor !== "" ? colorPickerRow.width + 24 : 38) : 0
+                height: 34
 
                 Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
@@ -1000,7 +1002,7 @@ Variants {
                         anchors.verticalCenter: parent.verticalCenter
                         text: "󰈊"
                         color: colorPickerMouseArea.containsMouse ? "#ffffff" : "#999999"
-                        font.pixelSize: 14
+                        font.pixelSize: 16
                         Behavior on color { ColorAnimation { duration: 130 } }
                     }
 
@@ -1042,33 +1044,34 @@ Variants {
                 spacing: 0
                 visible: panel.activePlayer !== null
 
-                Item {
+                GlowButton {
                     id: mediaWidget
-                    width: mediaRow.width + 16
-                    height: parent.height
+                    width: mediaRow.width + 28
+                    height: 34
+                    anchors.verticalCenter: parent.verticalCenter
+                    cut: 7
                     Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            var center = mapToGlobal(width / 2, 0)
-                            var barBottom = barBg.mapToGlobal(0, barBg.height)
-                            mediaPopup.open(center.x - mediaPopup.width / 2, barBottom.y + 6)
-                        }
+                    onClicked: {
+                        var center = mapToGlobal(width / 2, 0)
+                        var barBottom = barBg.mapToGlobal(0, barBg.height)
+                        mediaPopup.open(center.x - mediaPopup.width / 2, barBottom.y + 6)
                     }
 
                     Row {
                         id: mediaRow
-                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.centerIn: parent
                         spacing: 8
 
                         Rectangle {
-                            width: 30
-                            height: 30
+                            width: 24
+                            height: 24
                             anchors.verticalCenter: parent.verticalCenter
+                            radius: 2
                             color: "#111111"
                             clip: true
+                            border.color: "#3a3a3a"
+                            border.width: 1
 
                             Image {
                                 anchors.fill: parent
@@ -1082,7 +1085,7 @@ Variants {
                                 visible: !panel.activePlayer || panel.activePlayer.trackArtUrl === ""
                                 text: "♪"
                                 color: "#39c5bb"
-                                font.pixelSize: 14
+                                font.pixelSize: 13
                             }
                         }
 
@@ -1097,48 +1100,71 @@ Variants {
                                 id: mediaTitleText
                                 width: Math.min(implicitWidth, parent.maxTextWidth)
                                 text: panel.activePlayer ? panel.activePlayer.trackTitle : ""
-                                color: "#d0d0d0"
+                                color: mediaWidget.hovered ? "#ffffff" : "#d0d0d0"
                                 font.pixelSize: 12
                                 font.family: "monospace"
                                 elide: Text.ElideRight
                                 Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                                Behavior on color { ColorAnimation { duration: 130 } }
                             }
 
                             Text {
                                 id: mediaArtistText
                                 width: Math.min(implicitWidth, parent.maxTextWidth)
                                 text: panel.activePlayer ? panel.activePlayer.trackArtist : ""
-                                color: "#666666"
+                                color: mediaWidget.hovered ? "#999999" : "#666666"
                                 font.pixelSize: 10
                                 font.family: "monospace"
                                 elide: Text.ElideRight
                                 Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                                Behavior on color { ColorAnimation { duration: 130 } }
                             }
                         }
 
-                        Row {
-                            id: cavaRow
+                        Item {
+                            id: cavaViewport
+                            readonly property int glowPad: 2
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 1.5
-                            height: 30
+                            height: 22 + glowPad * 2
                             clip: true
                             visible: width > 0
-                            width: (panel.activePlayer !== null && panel.activePlayer.isPlaying) ? implicitWidth : 0
+                            width: (panel.activePlayer !== null && panel.activePlayer.isPlaying) ? cavaRow.implicitWidth + glowPad * 2 : 0
                             Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                             opacity: (panel.activePlayer !== null && panel.activePlayer.isPlaying) ? 1.0 : 0.0
                             Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                            Repeater {
-                                model: panel.cavaBars
+                            Row {
+                                id: cavaRow
+                                anchors.right: parent.right
+                                anchors.rightMargin: cavaViewport.glowPad
+                                anchors.bottom: parent.bottom
+                                anchors.bottomMargin: cavaViewport.glowPad
+                                spacing: 1.5
 
-                                delegate: Rectangle {
-                                    required property var modelData
-                                    anchors.bottom: parent.bottom
-                                    width: 2
-                                    height: Math.max(1.5, (modelData / 100) * 30)
-                                    radius: 1
-                                    color: "#39c5bb"
-                                    Behavior on height { NumberAnimation { duration: 70; easing.type: Easing.OutCubic } }
+                                Repeater {
+                                    model: panel.cavaBars
+
+                                    delegate: Rectangle {
+                                        required property var modelData
+                                        anchors.bottom: parent.bottom
+                                        width: 2
+                                        height: Math.max(1.5, (modelData / 100) * 22)
+                                        radius: 1
+                                        color: "#39c5bb"
+                                        Behavior on height { NumberAnimation { duration: 70; easing.type: Easing.OutCubic } }
+
+                                        layer.enabled: true
+                                        layer.effect: MultiEffect {
+                                            shadowEnabled: true
+                                            shadowColor: "#39c5bb"
+                                            shadowBlur: 0.8
+                                            shadowOpacity: 0.85
+                                            shadowHorizontalOffset: 0
+                                            shadowVerticalOffset: 0
+                                            blurMax: 24
+                                            autoPaddingEnabled: true
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1215,8 +1241,8 @@ Variants {
                         }
                         property var appEntry: appId !== "" ? DesktopEntries.heuristicLookup(appId) : null
 
-                        width: occupied ? 34 : (modelData.active ? 24 : 10)
-                        height: 28
+                        width: occupied ? 38 : (modelData.active ? 28 : 14)
+                        height: 32
 
                         Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
 
@@ -1256,8 +1282,8 @@ Variants {
 
                         IconImage {
                             anchors.centerIn: parent
-                            width: 18
-                            height: 18
+                            width: 20
+                            height: 20
                             mipmap: true
                             visible: occupied && appEntry !== null && appEntry.icon !== ""
                             source: appEntry && appEntry.icon !== "" ? "image://icon/" + appEntry.icon : ""

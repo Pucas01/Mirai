@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="178.56081" height="171.84674" viewBox="0 0 178.56081 171.84674"
+   xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <radialGradient id="gCenterLit" cx="0.35" cy="0.28" r="0.9">
+    <stop offset="0" stop-color="#ffffff"/>
+    <stop offset="0.4" stop-color="#c8fcf9"/>
+    <stop offset="0.75" stop-color="#8ff5f0"/>
+    <stop offset="1" stop-color="#5fd8d0"/>
+  </radialGradient>
+</defs>
+<g transform="translate(-19.795541,-51.240942)">
+  <path id="path4" fill="url(#gCenterLit)" d="M 135.00196,137.16431 A 25.724691,25.724691 0 0 1 109.27769,162.889 25.724691,25.724691 0 0 1 83.552576,137.16515 25.724691,25.724691 0 0 1 109.276,111.43962 a 25.724691,25.724691 0 0 1 25.72596,25.72299 l -25.72469,0.002 z"/>
+</g>
+</svg>

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Services.Mpris
 import "./DivaPaint.js" as DivaPaint
@@ -9,10 +10,13 @@ Window {
     property var activePlayer: null
     property var preferredPlayer: null
     property var displayPlayer: activePlayer
+    property var cavaBars: []
     flags: Qt.Popup | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint
     color: "transparent"
-    width: 260
-    height: width + infoPanel.height + 2
+    readonly property int speakerSize: 196
+    readonly property int infoWidth: 210
+    width: speakerSize + infoWidth + 2
+    height: speakerSize + 2
     visible: false
 
     function open(x, y) {
@@ -84,54 +88,175 @@ Window {
             Translate { y: mediaRect.slideY }
         ]
 
-        Column {
+
+        Row {
             id: mediaContent
             anchors.fill: parent
             anchors.margins: 1
             spacing: 0
 
             Rectangle {
-                width: parent.width
-                height: width
-                color: "#111111"
+                id: artArea
+                width: mediaPopup.speakerSize
+                height: mediaPopup.speakerSize
+                gradient: Gradient {
+                    orientation: Gradient.Vertical
+                    GradientStop { position: 0.0; color: "#1a1a1a" }
+                    GradientStop { position: 0.5; color: "#141414" }
+                    GradientStop { position: 1.0; color: "#0a0a0a" }
+                }
+
+                readonly property real level: {
+                    var bars = mediaPopup.cavaBars
+                    if (!bars || bars.length === 0) return 0
+                    var sum = 0
+                    for (var i = 0; i < bars.length; i++) sum += bars[i]
+                    return Math.max(0, Math.min(1, (sum / bars.length) / 100))
+                }
+                readonly property bool playing: mediaPopup.displayPlayer && mediaPopup.displayPlayer.isPlaying
 
                 Image {
+                    id: artBackdropImage
                     anchors.fill: parent
                     source: mediaPopup.displayPlayer ? mediaPopup.displayPlayer.trackArtUrl : ""
                     fillMode: Image.PreserveAspectCrop
-                    visible: mediaPopup.displayPlayer && mediaPopup.displayPlayer.trackArtUrl !== ""
+                    visible: false
+                    asynchronous: true
+                    smooth: true
                 }
 
-                Rectangle {
-                    visible: !mediaPopup.displayPlayer || mediaPopup.displayPlayer.trackArtUrl === ""
+                MultiEffect {
                     anchors.fill: parent
-                    color: "#111111"
-                    Text {
+                    source: artBackdropImage
+                    visible: mediaPopup.displayPlayer && mediaPopup.displayPlayer.trackArtUrl !== ""
+                    opacity: 1
+                    saturation: -0.2
+                    blurEnabled: true
+                    blur: 0.6
+                    blurMax: 48
+                    autoPaddingEnabled: false
+                }
+
+                Item {
+                    id: speakerStage
+                    anchors.centerIn: parent
+                    width: Math.min(parent.width, parent.height) * 0.86
+                    height: width
+
+                    Image {
+                        id: speakerBody
+                        anchors.fill: parent
+                        source: Quickshell.shellPath("bar/assets/speaker_body.svg")
+                        sourceSize: Qt.size(width, height)
+                        smooth: true
+                        z: 0
+                    }
+
+                    Image {
+                        id: speakerRingGlow
+                        anchors.fill: parent
+                        source: Quickshell.shellPath("bar/assets/speaker_ring.svg")
+                        sourceSize: Qt.size(width, height)
+                        smooth: true
+                        scale: artArea.playing ? 1.0 + artArea.level * 0.22 : 1.0
+                        opacity: artArea.playing ? artArea.level * 0.7 : 0.0
+                        Behavior on scale { NumberAnimation { duration: 60; easing.type: Easing.OutCubic } }
+                        Behavior on opacity { NumberAnimation { duration: 60; easing.type: Easing.OutCubic } }
+                        z: 1
+                        layer.enabled: true
+                        layer.effect: MultiEffect {
+                            blurEnabled: true
+                            blur: 1.0
+                            blurMax: 32
+                        }
+                    }
+
+                    Image {
+                        id: speakerRing
+                        anchors.fill: parent
+                        source: Quickshell.shellPath("bar/assets/speaker_ring.svg")
+                        sourceSize: Qt.size(width, height)
+                        smooth: true
+                        scale: artArea.playing ? 1.0 + artArea.level * 0.05 : 1.0
+                        Behavior on scale { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                        z: 2
+                    }
+
+                    Item {
+                        id: artDisc
+                        z: 3
                         anchors.centerIn: parent
-                        text: "♪"
-                        color: "#39c5bb"
-                        font.pixelSize: 48
+                        width: parent.width * 0.37
+                        height: width
+
+                        Rectangle {
+                            id: artDiscMask
+                            anchors.fill: parent
+                            radius: width / 2
+                            color: "#000000"
+                            visible: false
+                        }
+
+                        Image {
+                            id: artDiscImage
+                            anchors.fill: parent
+                            source: mediaPopup.displayPlayer ? mediaPopup.displayPlayer.trackArtUrl : ""
+                            fillMode: Image.PreserveAspectCrop
+                            visible: false
+                            asynchronous: true
+                            smooth: true
+                        }
+
+                        MultiEffect {
+                            anchors.fill: parent
+                            source: artDiscImage
+                            visible: mediaPopup.displayPlayer && mediaPopup.displayPlayer.trackArtUrl !== ""
+                            maskEnabled: true
+                            maskSource: artDiscMask
+                            saturation: -0.9
+                            brightness: -0.08
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            visible: !mediaPopup.displayPlayer || mediaPopup.displayPlayer.trackArtUrl === ""
+                            text: "♪"
+                            color: "#8ff5f0"
+                            font.pixelSize: parent.width * 0.4
+                        }
                     }
                 }
 
-                Rectangle {
-                    anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-                    height: 48
-                    gradient: Gradient {
-                        orientation: Gradient.Vertical
-                        GradientStop { position: 0.0; color: "#00000000" }
-                        GradientStop { position: 1.0; color: "#cc1a1a1a" }
-                    }
-                }
             }
 
             Rectangle {
                 id: infoPanel
-                width: parent.width
-                height: Mpris.players.values.length > 1
-                    ? playerSwitcher.y + playerSwitcher.height + 10
-                    : controlsRow.y + controlsRow.height + 16
-                color: "#1a1a1a"
+                width: mediaPopup.infoWidth
+                height: mediaPopup.speakerSize
+                gradient: Gradient {
+                    orientation: Gradient.Vertical
+                    GradientStop { position: 0.0;  color: "#242424" }
+                    GradientStop { position: 0.15; color: "#1e1e1e" }
+                    GradientStop { position: 1.0;  color: "#151515" }
+                }
+
+                property real hoverProgress: 0.0
+                Behavior on hoverProgress { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+
+                HoverHandler {
+                    id: infoHover
+                    onHoveredChanged: infoPanel.hoverProgress = hovered ? 1.0 : 0.0
+                }
+
+                Rectangle {
+                    anchors { left: parent.left; right: parent.right; top: parent.top }
+                    height: 4
+                    gradient: Gradient {
+                        orientation: Gradient.Vertical
+                        GradientStop { position: 0.0; color: Qt.rgba(80/255, 80/255, 80/255, 0.31 + infoPanel.hoverProgress * 0.2) }
+                        GradientStop { position: 1.0; color: "#00000000" }
+                    }
+                }
 
                 Column {
                     anchors { left: parent.left; right: parent.right; top: parent.top }
@@ -161,28 +286,39 @@ Window {
                 Item {
                     id: progressArea
                     visible: mediaPopup.displayPlayer && mediaPopup.displayPlayer.length > 0
-                    anchors { left: parent.left; right: parent.right; top: parent.top; leftMargin: 14; rightMargin: 14; topMargin: 56 }
-                    height: 26
+                    anchors { left: parent.left; right: parent.right; top: parent.top; leftMargin: 14; rightMargin: 14; topMargin: 68 }
+                    height: 40
 
-                    Rectangle {
-                        id: progressTrack
-                        anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter }
-                        height: 4
-                        radius: 2
-                        color: "#2a2a2a"
+                    readonly property real progressFrac: Math.max(0, Math.min(1, mediaPopup.displayPlayer && mediaPopup.displayPlayer.length > 0 ? mediaPopup.livePosition / mediaPopup.displayPlayer.length : 0))
+                    readonly property int tickCount: Math.max(8, Math.floor(width / 7))
 
-                        Rectangle {
-                            width: progressTrack.width * Math.max(0, Math.min(1, mediaPopup.displayPlayer && mediaPopup.displayPlayer.length > 0 ? mediaPopup.livePosition / mediaPopup.displayPlayer.length : 0))
-                            height: parent.height
-                            radius: parent.radius
-                            color: "#39c5bb"
-                            Behavior on width { NumberAnimation { duration: progressDragArea.pressed ? 0 : 400; easing.type: Easing.Linear } }
+                    Row {
+                        id: tickRow
+                        anchors { left: parent.left; right: parent.right; top: parent.top }
+                        height: 14
+                        spacing: (progressArea.width - progressArea.tickCount * 4) / Math.max(1, progressArea.tickCount - 1)
+
+                        Repeater {
+                            model: progressArea.tickCount
+                            delegate: Rectangle {
+                                required property int index
+                                readonly property bool lit: progressArea.tickCount <= 1 ? true : (index / (progressArea.tickCount - 1)) <= progressArea.progressFrac
+                                width: 4
+                                height: lit ? 14 : 7
+                                anchors.bottom: parent.bottom
+                                gradient: Gradient {
+                                    orientation: Gradient.Vertical
+                                    GradientStop { position: 0.0; color: lit ? "#8ff5f0" : "#3a3a3a" }
+                                    GradientStop { position: 1.0; color: lit ? "#1f8a82" : "#242424" }
+                                }
+                                Behavior on height { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                            }
                         }
                     }
 
                     MouseArea {
                         id: progressDragArea
-                        anchors { fill: parent }
+                        anchors { left: parent.left; right: parent.right; top: parent.top; bottom: tickRow.bottom }
                         enabled: mediaPopup.displayPlayer && mediaPopup.displayPlayer.canSeek
                         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                         function seekToX(mx) {
@@ -197,14 +333,14 @@ Window {
                     }
 
                     Text {
-                        anchors { left: parent.left; top: progressTrack.bottom; topMargin: 4 }
+                        anchors { left: parent.left; top: tickRow.bottom; topMargin: 5 }
                         text: mediaPopup.formatTime(mediaPopup.livePosition)
                         color: "#666666"
                         font.pixelSize: 9; font.family: "monospace"
                     }
 
                     Text {
-                        anchors { right: parent.right; top: progressTrack.bottom; topMargin: 4 }
+                        anchors { right: parent.right; top: tickRow.bottom; topMargin: 5 }
                         text: mediaPopup.displayPlayer ? mediaPopup.formatTime(mediaPopup.displayPlayer.length) : "0:00"
                         color: "#666666"
                         font.pixelSize: 9; font.family: "monospace"
@@ -213,13 +349,16 @@ Window {
 
                 Row {
                     id: controlsRow
-                    anchors { horizontalCenter: parent.horizontalCenter; top: progressArea.bottom; topMargin: 26 }
-                    spacing: 12
+                    anchors { horizontalCenter: parent.horizontalCenter; top: progressArea.bottom; topMargin: 4 }
+                    spacing: 10
 
                     component MediaBtn: Item {
-                        width: 52
-                        height: 36
+                        id: mediaBtnRoot
+                        width: 46
+                        height: 32
                         property string sym: ""
+                        property bool hero: false
+                        onHeroChanged: btnCanvas.requestPaint()
                         signal activated()
 
                         Canvas {
@@ -228,22 +367,36 @@ Window {
                             property real hoverProgress: 0.0
                             property real mx: 0.5
                             property real my: 0.5
+                            property real pulse: 0.0
+                            SequentialAnimation on pulse {
+                                running: btnCanvas.parent.hero
+                                loops: Animation.Infinite
+                                NumberAnimation { to: 1.0; duration: 900; easing.type: Easing.InOutSine }
+                                NumberAnimation { to: 0.0; duration: 900; easing.type: Easing.InOutSine }
+                            }
                             Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
                             Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                             Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
                             onHoverProgressChanged: requestPaint()
                             onMxChanged: requestPaint()
                             onMyChanged: requestPaint()
+                            onPulseChanged: requestPaint()
                             onWidthChanged: requestPaint()
                             onHeightChanged: requestPaint()
-                            onPaint: DivaPaint.paintFacetPill(btnCanvas, hoverProgress, 6)
+                            onPaint: {
+                                if (parent.hero) {
+                                    DivaPaint.paintWsPill(btnCanvas, 1.0, hoverProgress, pulse)
+                                } else {
+                                    DivaPaint.paintFacetPill(btnCanvas, hoverProgress, 6)
+                                }
+                            }
                         }
 
                         Text {
                             anchors.centerIn: parent
                             text: parent.sym
-                            color: btnArea.containsMouse ? "#ffffff" : "#999999"
-                            font.pixelSize: 15
+                            color: parent.hero ? "#ffffff" : (btnArea.containsMouse ? "#ffffff" : "#999999")
+                            font.pixelSize: parent.hero ? 17 : 15
                             Behavior on color { ColorAnimation { duration: 130 } }
                         }
 
@@ -266,6 +419,8 @@ Window {
                         onActivated: if (mediaPopup.activePlayer) mediaPopup.activePlayer.previous()
                     }
                     MediaBtn {
+                        width: 54
+                        hero: mediaPopup.activePlayer && mediaPopup.activePlayer.isPlaying
                         sym: mediaPopup.activePlayer && mediaPopup.activePlayer.isPlaying ? "⏸" : "⏵"
                         onActivated: if (mediaPopup.activePlayer) mediaPopup.activePlayer.togglePlaying()
                     }
@@ -278,8 +433,8 @@ Window {
                 Item {
                     id: playerSwitcher
                     visible: Mpris.players.values.length > 1
-                    anchors { left: parent.left; right: parent.right; top: controlsRow.bottom; topMargin: 18; leftMargin: 14; rightMargin: 14 }
-                    height: 28
+                    anchors { left: parent.left; right: parent.right; top: controlsRow.bottom; topMargin: 12; leftMargin: 14; rightMargin: 14 }
+                    height: 24
 
                     Canvas {
                         id: playerCycleCanvas
