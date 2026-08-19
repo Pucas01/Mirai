@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Widgets
+import "./DivaPaint.js" as DivaPaint
 
 Window {
     id: toastWin
@@ -63,51 +64,7 @@ Window {
             Canvas {
                 id: toastCanvas
                 anchors.fill: parent
-                onPaint: {
-                    var ctx = getContext("2d")
-                    ctx.clearRect(0, 0, width, height)
-                    var cut = 8, w = width, h = height
-
-                    function drawShape() {
-                        ctx.beginPath()
-                        ctx.moveTo(cut, 0)
-                        ctx.lineTo(w,       0)
-                        ctx.lineTo(w,       h - cut)
-                        ctx.lineTo(w - cut, h)
-                        ctx.lineTo(0,       h)
-                        ctx.lineTo(0,       cut)
-                        ctx.closePath()
-                    }
-
-                    drawShape()
-                    var base = ctx.createLinearGradient(0, 0, 0, h)
-                    base.addColorStop(0,    "#3d3d3d")
-                    base.addColorStop(0.08, "#2a2a2a")
-                    base.addColorStop(0.5,  "#303030")
-                    base.addColorStop(1.0,  "#3a3a3a")
-                    ctx.fillStyle = base
-                    ctx.fill()
-
-                    ctx.beginPath()
-                    ctx.moveTo(cut, 0)
-                    ctx.lineTo(w,   0)
-                    ctx.lineTo(w,   h * 0.55)
-                    ctx.lineTo(0,   h * 0.55)
-                    ctx.lineTo(0,   cut)
-                    ctx.closePath()
-                    var gloss = ctx.createLinearGradient(0, 0, 0, h * 0.55)
-                    gloss.addColorStop(0, "rgba(255,255,255,0.18)")
-                    gloss.addColorStop(1, "rgba(255,255,255,0.00)")
-                    ctx.fillStyle = gloss
-                    ctx.fill()
-
-                    ctx.beginPath()
-                    ctx.moveTo(cut, 0.5)
-                    ctx.lineTo(w,   0.5)
-                    ctx.strokeStyle = "#646464"
-                    ctx.lineWidth = 1
-                    ctx.stroke()
-                }
+                onPaint: DivaPaint.paintFacetPill(toastCanvas, 0, 8)
             }
 
             Row {
@@ -146,24 +103,22 @@ Window {
                 }
             }
 
-            Item {
+            GlowButton {
                 id: toastCloseItem
-                anchors { right: parent.right; top: parent.top; rightMargin: 8; topMargin: 8 }
-                width: 16; height: 16
+                anchors { right: parent.right; top: parent.top; rightMargin: 6; topMargin: 6 }
+                width: 20; height: 20
+                cut: 4
+                accent: DivaPaint.ACCENT_RED
 
                 Text {
                     anchors.centerIn: parent
                     text: "×"
-                    color: toastCloseArea.containsMouse ? "#ffffff" : "#555555"
-                    font.pixelSize: 14
+                    color: toastCloseItem.hovered ? "#ffffff" : "#999999"
+                    font.pixelSize: 13
                     Behavior on color { ColorAnimation { duration: 100 } }
                 }
 
-                MouseArea {
-                    id: toastCloseArea
-                    anchors.fill: parent; hoverEnabled: true
-                    onClicked: { toastWin.isOpen = false; toastHideTimer.start() }
-                }
+                onClicked: { toastWin.isOpen = false; toastHideTimer.start() }
             }
         }
 
