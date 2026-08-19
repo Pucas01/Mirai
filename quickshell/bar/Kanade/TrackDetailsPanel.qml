@@ -1,4 +1,6 @@
 import QtQuick
+import ".."
+import "../DivaPaint.js" as DivaPaint
 
 Item {
     id: detailsPanel
@@ -35,20 +37,19 @@ Item {
                 font.pixelSize: 9; font.family: "monospace"
             }
 
-            Text {
+            GlowButton {
                 anchors { right: parent.right; verticalCenter: parent.verticalCenter }
-                text: "✕"
-                color: closeDetailsArea.containsMouse ? "#ffffff" : "#666666"
-                font.pixelSize: 11
-                Behavior on color { ColorAnimation { duration: 100 } }
+                width: 22; height: 18
+                cut: 4
+                accent: DivaPaint.ACCENT_RED
+                onClicked: kanadeWin.closeTrackDetails()
 
-                MouseArea {
-                    id: closeDetailsArea
-                    anchors.fill: parent
-                    anchors.margins: -8
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: kanadeWin.closeTrackDetails()
+                Text {
+                    anchors.centerIn: parent
+                    text: "✕"
+                    color: parent.hovered ? "#ffffff" : "#999999"
+                    font.pixelSize: 10
+                    Behavior on color { ColorAnimation { duration: 100 } }
                 }
             }
         }

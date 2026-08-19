@@ -5,7 +5,9 @@ Item {
     id: foldersSection
     property var kanadeWin: null
     property bool sectionActive: false
-    visible: sectionActive
+    opacity: sectionActive ? 1.0 : 0.0
+    visible: opacity > 0.01
+    Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
     anchors.fill: parent
 
     Item {

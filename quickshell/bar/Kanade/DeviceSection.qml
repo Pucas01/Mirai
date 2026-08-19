@@ -5,7 +5,9 @@ Item {
     id: deviceSection
     property var kanadeWin: null
     property bool sectionActive: false
-    visible: sectionActive
+    opacity: sectionActive ? 1.0 : 0.0
+    visible: opacity > 0.01
+    Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
     anchors.fill: parent
 
     function formatBytes(n) {
@@ -84,7 +86,7 @@ Item {
                 Behavior on color { ColorAnimation { duration: 100 } }
 
                 Row {
-                    anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 14 }
+                    anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 14; right: pinBtn.left; rightMargin: 8 }
                     spacing: 12
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
@@ -95,7 +97,16 @@ Item {
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 2
-                        Text { text: modelData.name; color: "#e0e0e0"; font.pixelSize: 12; font.family: "monospace" }
+                        Row {
+                            spacing: 6
+                            Text { text: modelData.name; color: "#e0e0e0"; font.pixelSize: 12; font.family: "monospace" }
+                            Text {
+                                visible: kanadeWin && kanadeWin.defaultDevicePath === modelData.path
+                                text: "default"
+                                color: "#39c5bb"
+                                font.pixelSize: 8; font.family: "monospace"; font.bold: true
+                            }
+                        }
                         Text {
                             text: deviceSection.formatBytes(modelData.avail) + " free of " + deviceSection.formatBytes(modelData.size)
                             color: "#666666"; font.pixelSize: 9; font.family: "monospace"
@@ -107,6 +118,31 @@ Item {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: kanadeWin.selectedDevicePath = modelData.path
+                }
+
+                Item {
+                    id: pinBtn
+                    anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 12 }
+                    width: 24; height: 24
+
+                    readonly property bool isDefault: kanadeWin && kanadeWin.defaultDevicePath === modelData.path
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: pinBtn.isDefault ? "󰓎" : "󰓒"
+                        color: pinBtn.isDefault ? "#39c5bb" : (pinArea.containsMouse ? "#cccccc" : "#555555")
+                        font.pixelSize: 14
+                        Behavior on color { ColorAnimation { duration: 100 } }
+                    }
+
+                    MouseArea {
+                        id: pinArea
+                        anchors.fill: parent
+                        anchors.margins: -4
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: kanadeWin.setDefaultDevice(pinBtn.isDefault ? "" : modelData.path)
+                    }
                 }
             }
         }

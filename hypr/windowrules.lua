@@ -61,3 +61,9 @@ hl.window_rule({
     float = true,
     stay_focused = true,
 })
+
+hl.window_rule({
+    name  = "float-kanade",
+    match = { title = "kanade" },
+    float = true,
+})

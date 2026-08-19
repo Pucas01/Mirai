@@ -16,6 +16,7 @@ Window {
     readonly property string homeDir: Quickshell.env("HOME")
     readonly property string mediaUser: Quickshell.env("USER")
     readonly property string rootsPath: kanadeWin.homeDir + "/.cache/kanade-roots.json"
+    readonly property string defaultDeviceStatePath: kanadeWin.homeDir + "/.cache/kanade-default-device"
     readonly property string translationsPath: kanadeWin.homeDir + "/.cache/kanade-translations.json"
     readonly property string translateAllStatePath: kanadeWin.homeDir + "/.cache/kanade-translate-all"
     readonly property string coverCacheDir: kanadeWin.homeDir + "/.cache/kanade-covers"
@@ -68,6 +69,14 @@ Window {
     property var devices: []
     property string selectedDevicePath: ""
     property bool devicesRefreshing: false
+
+    property string defaultDevicePath: ""
+    function setDefaultDevice(path) {
+        kanadeWin.defaultDevicePath = path
+        saveDefaultDeviceProc.command = ["bash", "-c", "mkdir -p ~/.cache && printf '%s' \"" + path + "\" > \"" + kanadeWin.defaultDeviceStatePath + "\""]
+        saveDefaultDeviceProc.running = false
+        saveDefaultDeviceProc.running = true
+    }
 
     property bool syncing: false
     property int syncTotal: 0
@@ -174,6 +183,29 @@ Window {
         devicesProc.running = true
     }
 
+    property bool defaultDevicePresent: false
+
+    Timer {
+        interval: 3000
+        running: kanadeWin.defaultDevicePath !== ""
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: defaultDeviceCheckProc.running = true
+    }
+
+    Process {
+        id: defaultDeviceCheckProc
+        command: ["bash", "-c", "[ -d \"" + kanadeWin.defaultDevicePath + "\" ] && echo 1 || echo 0"]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var present = text.trim() === "1"
+                if (present && !kanadeWin.defaultDevicePresent) kanadeWin.refreshDevices()
+                kanadeWin.defaultDevicePresent = present
+            }
+        }
+    }
+
     function syncToDevice() {
         if (kanadeWin.syncing || kanadeWin.selectedDevicePath === "" || kanadeWin.tracks.length === 0) return
         kanadeWin.syncing = true
@@ -209,20 +241,14 @@ Window {
         loadRootsProc.running = true
         loadTranslationsProc.running = true
         loadTranslateAllProc.running = true
+        loadDefaultDeviceProc.running = true
         kanadeWin.refreshDevices()
     }
 
     onVisibleChanged: {
         if (visible) {
-            floatProc.running = false
-            floatProc.running = true
             kanadeWin.refreshDevices()
         }
-    }
-
-    Process {
-        id: floatProc
-        command: ["hyprctl", "dispatch", "setfloating", "title:kanade"]
     }
 
     Process {
@@ -290,6 +316,9 @@ Window {
                 kanadeWin.devices = list
                 if (kanadeWin.selectedDevicePath !== "" && !list.some(function(d) { return d.path === kanadeWin.selectedDevicePath })) {
                     kanadeWin.selectedDevicePath = ""
+                }
+                if (kanadeWin.selectedDevicePath === "" && kanadeWin.defaultDevicePath !== "" && list.some(function(d) { return d.path === kanadeWin.defaultDevicePath })) {
+                    kanadeWin.selectedDevicePath = kanadeWin.defaultDevicePath
                 }
             }
         }
@@ -392,6 +421,21 @@ Window {
     }
 
     Process {
+        id: loadDefaultDeviceProc
+        command: ["cat", kanadeWin.defaultDeviceStatePath]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: { kanadeWin.defaultDevicePath = text.trim() }
+        }
+    }
+
+    Process {
+        id: saveDefaultDeviceProc
+        command: ["true"]
+        running: false
+    }
+
+    Process {
         id: syncProc
         command: ["true"]
         running: false
@@ -415,6 +459,7 @@ Window {
     }
 
     PanelBackground {
+        id: kanadeBody
         anchors.fill: parent
         showBorder: false
 
@@ -509,6 +554,8 @@ Window {
                         property string sym: ""
                         property string target: ""
                         property bool active: kanadeWin.section === target
+                        property real activeProgress: active ? 1.0 : 0.0
+                        Behavior on activeProgress { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                         width: parent.width
                         height: 38
 
@@ -531,9 +578,9 @@ Window {
                                 onHeightChanged: requestPaint()
                                 Connections {
                                     target: navItem
-                                    function onActiveChanged() { navCanvas.requestPaint() }
+                                    function onActiveProgressChanged() { navCanvas.requestPaint() }
                                 }
-                                onPaint: DivaPaint.paintFacetPill(navCanvas, navItem.active ? 1.0 : navCanvas.hp, 6)
+                                onPaint: DivaPaint.paintFacetPill(navCanvas, Math.max(navItem.activeProgress, navCanvas.hp), 6)
                             }
 
                             Row {
@@ -613,4 +660,5 @@ Window {
         function show(): void { kanadeWin.visible = true }
         function hide(): void { kanadeWin.visible = false }
     }
+
 }
