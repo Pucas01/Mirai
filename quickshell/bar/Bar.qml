@@ -140,7 +140,7 @@ Variants {
             if (!panel.brightnessAvailable) return
             if (!panel.brightnessOsdArmed) return
             if (!panel.hyprMonitor || !panel.hyprMonitor.focused) return
-            if (brightnessPopup.sliderActive) return
+            if (controlCenter.sliderActive) return
             var wsCenter = wsArea.mapToGlobal(wsArea.width / 2, 0)
             var barBottom = barBg.mapToGlobal(0, barBg.height)
             brightnessOsd.show(wsCenter.x - brightnessOsd.width / 2, barBottom.y + 8)
@@ -399,7 +399,7 @@ Variants {
         function showAudioOsd() {
             if (!panel.audioOsdArmed) return
             if (!panel.hyprMonitor || !panel.hyprMonitor.focused) return
-            if (audioPopup.sliderActive || startMenu.audioSliderActive) return
+            if (controlCenter.sliderActive || startMenu.audioSliderActive) return
             var wsCenter = wsArea.mapToGlobal(wsArea.width / 2, 0)
             var barBottom = barBg.mapToGlobal(0, barBg.height)
             audioOsd.show(wsCenter.x - audioOsd.width / 2, barBottom.y + 8)
@@ -450,21 +450,14 @@ Variants {
             id: startMenu
         }
 
-        NotifPopup {
-            id: notifPopup
+        ControlCenter {
+            id: controlCenter
             trackedNotifications: notifServer.trackedNotifications
             notifCount: shellRoot.globalNotifCount
             onNotifCountReset: shellRoot.globalNotifCount = 0
-        }
-
-        AudioPopup {
-            id: audioPopup
-        }
-
-        BrightnessPopup {
-            id: brightnessPopup
             brightness: panel.brightness
-            onMoved: v => panel.setBrightness(v)
+            brightnessAvailable: panel.brightnessAvailable
+            onBrightnessMoved: v => panel.setBrightness(v)
         }
 
         BatteryPopup {
@@ -570,8 +563,11 @@ Variants {
                 }
 
                 Item {
-                    id: audioItem
-                    width: 39; height: 34
+                    id: quickSettingsItem
+                    readonly property int glyphWidth: 39
+                    readonly property int glyphCount: 2 + (panel.brightnessAvailable ? 1 : 0)
+                    width: glyphWidth * glyphCount
+                    height: 34
                     anchors.verticalCenter: parent.verticalCenter
 
                     PwObjectTracker {
@@ -579,9 +575,9 @@ Variants {
                     }
 
                     Canvas {
-                        id: audioCanvas
+                        id: quickSettingsCanvas
                         anchors.fill: parent
-                        property real hoverProgress: 0.0
+                        property real hoverProgress: (qsAudioArea.containsMouse || qsBrightnessArea.containsMouse || qsNotifArea.containsMouse) ? 1.0 : 0.0
                         property real mx: 0.5
                         property real my: 0.5
                         Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
@@ -592,89 +588,100 @@ Variants {
                         onMyChanged: requestPaint()
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
-                        onPaint: DivaPaint.paintFacetPill(audioCanvas, hoverProgress)
+                        onPaint: DivaPaint.paintFacetPill(quickSettingsCanvas, hoverProgress)
                     }
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: (Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio && Pipewire.defaultAudioSink.audio.muted) ? "󰝟" : "󰕾"
-                        font.pixelSize: 16
-                        color: audioMouseArea.containsMouse ? "#ffffff" : "#888888"
-                        Behavior on color { ColorAnimation { duration: 130 } }
+                    function openTab(tab, area) {
+                        var center = area.mapToGlobal(area.width / 2, 0)
+                        var barBottom = barBg.mapToGlobal(0, barBg.height)
+                        controlCenter.activeTab = tab
+                        controlCenter.open(center.x - controlCenter.width / 2, barBottom.y + 6)
                     }
 
-                    MouseArea {
-                        id: audioMouseArea
-                        anchors.fill: parent; hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onContainsMouseChanged: audioCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
-                        onPositionChanged: mouse => {
-                            audioCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
-                            audioCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
-                        }
-                        onClicked: {
-                            var center = mapToGlobal(width / 2, 0)
-                            var barBottom = barBg.mapToGlobal(0, barBg.height)
-                            audioPopup.open(center.x - audioPopup.width / 2, barBottom.y + 6)
-                        }
-                        onWheel: wheel => {
-                            if (!Pipewire.defaultAudioSink || !Pipewire.defaultAudioSink.audio) return
-                            var step = wheel.angleDelta.y > 0 ? 0.05 : -0.05
-                            var audio = Pipewire.defaultAudioSink.audio
-                            audio.volume = Math.max(0, Math.min(1, audio.volume + step))
-                        }
-                    }
-                }
-
-                Item {
-                    id: brightnessItem
-                    visible: panel.brightnessAvailable
-                    width: panel.brightnessAvailable ? 39 : 0
-                    height: 34
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    Canvas {
-                        id: brightnessCanvas
+                    Row {
                         anchors.fill: parent
-                        property real hoverProgress: 0.0
-                        property real mx: 0.5
-                        property real my: 0.5
-                        Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
-                        Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
-                        Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
-                        onHoverProgressChanged: requestPaint()
-                        onMxChanged: requestPaint()
-                        onMyChanged: requestPaint()
-                        onWidthChanged: requestPaint()
-                        onHeightChanged: requestPaint()
-                        onPaint: DivaPaint.paintFacetPill(brightnessCanvas, hoverProgress)
-                    }
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: "󰃟"
-                        font.pixelSize: 16
-                        color: brightnessMouseArea.containsMouse ? "#ffffff" : "#888888"
-                        Behavior on color { ColorAnimation { duration: 130 } }
-                    }
+                        Item {
+                            id: qsAudioZone
+                            width: quickSettingsItem.glyphWidth
+                            height: parent.height
 
-                    MouseArea {
-                        id: brightnessMouseArea
-                        anchors.fill: parent; hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onContainsMouseChanged: brightnessCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
-                        onPositionChanged: mouse => {
-                            brightnessCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
-                            brightnessCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                            Text {
+                                anchors.centerIn: parent
+                                text: (Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio && Pipewire.defaultAudioSink.audio.muted) ? "󰝟" : "󰕾"
+                                font.pixelSize: 16
+                                color: qsAudioArea.containsMouse ? "#ffffff" : "#888888"
+                                Behavior on color { ColorAnimation { duration: 130 } }
+                            }
+
+                            MouseArea {
+                                id: qsAudioArea
+                                anchors.fill: parent; hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onPositionChanged: mouse => {
+                                    quickSettingsCanvas.mx = Math.max(0, Math.min(1, (parent.x + mouse.x) / quickSettingsItem.width))
+                                    quickSettingsCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                                }
+                                onClicked: quickSettingsItem.openTab("audio", qsAudioArea)
+                            }
                         }
-                        onClicked: {
-                            var center = mapToGlobal(width / 2, 0)
-                            var barBottom = barBg.mapToGlobal(0, barBg.height)
-                            brightnessPopup.open(center.x - brightnessPopup.width / 2, barBottom.y + 6)
+
+                        Item {
+                            id: qsBrightnessZone
+                            visible: panel.brightnessAvailable
+                            width: panel.brightnessAvailable ? quickSettingsItem.glyphWidth : 0
+                            height: parent.height
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰃟"
+                                font.pixelSize: 16
+                                color: qsBrightnessArea.containsMouse ? "#ffffff" : "#888888"
+                                Behavior on color { ColorAnimation { duration: 130 } }
+                            }
+
+                            MouseArea {
+                                id: qsBrightnessArea
+                                anchors.fill: parent; hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onPositionChanged: mouse => {
+                                    quickSettingsCanvas.mx = Math.max(0, Math.min(1, (parent.x + mouse.x) / quickSettingsItem.width))
+                                    quickSettingsCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                                }
+                                onClicked: quickSettingsItem.openTab("audio", qsBrightnessArea)
+                            }
                         }
-                        onWheel: wheel => {
-                            var step = wheel.angleDelta.y > 0 ? 0.05 : -0.05
-                            panel.setBrightness(panel.brightness + step)
+
+                        Item {
+                            id: qsNotifZone
+                            width: quickSettingsItem.glyphWidth
+                            height: parent.height
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰂚"
+                                font.pixelSize: 16
+                                color: qsNotifArea.containsMouse ? "#ffffff" : shellRoot.globalNotifCount > 0 ? "#39c5bb" : "#888888"
+                                Behavior on color { ColorAnimation { duration: 130 } }
+                            }
+
+                            Rectangle {
+                                visible: shellRoot.globalNotifCount > 0
+                                anchors { top: parent.top; right: parent.right; topMargin: 2; rightMargin: 2 }
+                                width: 8; height: 8; radius: 4
+                                color: "#ff4444"
+                            }
+
+                            MouseArea {
+                                id: qsNotifArea
+                                anchors.fill: parent; hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onPositionChanged: mouse => {
+                                    quickSettingsCanvas.mx = Math.max(0, Math.min(1, (parent.x + mouse.x) / quickSettingsItem.width))
+                                    quickSettingsCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                                }
+                                onClicked: quickSettingsItem.openTab("notifications", qsNotifArea)
+                            }
                         }
                     }
                 }
@@ -741,60 +748,6 @@ Variants {
                             var center = mapToGlobal(width / 2, 0)
                             var barBottom = barBg.mapToGlobal(0, barBg.height)
                             batteryPopup.open(center.x - batteryPopup.width / 2, barBottom.y + 6)
-                        }
-                    }
-                }
-
-                Item {
-                    id: bellItem
-                    width: 39; height: 34
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    Canvas {
-                        id: bellCanvas
-                        anchors.fill: parent
-                        property real hoverProgress: 0.0
-                        property real mx: 0.5
-                        property real my: 0.5
-                        Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
-                        Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
-                        Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
-                        onHoverProgressChanged: requestPaint()
-                        onMxChanged: requestPaint()
-                        onMyChanged: requestPaint()
-                        onWidthChanged: requestPaint()
-                        onHeightChanged: requestPaint()
-                        onPaint: DivaPaint.paintFacetPill(bellCanvas, hoverProgress)
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "󰂚"
-                        font.pixelSize: 16
-                        color: bellMouseArea.containsMouse ? "#ffffff" : shellRoot.globalNotifCount > 0 ? "#39c5bb" : "#888888"
-                        Behavior on color { ColorAnimation { duration: 130 } }
-                    }
-
-                    Rectangle {
-                        visible: shellRoot.globalNotifCount > 0
-                        anchors { top: parent.top; right: parent.right; topMargin: 2; rightMargin: 2 }
-                        width: 8; height: 8; radius: 4
-                        color: "#ff4444"
-                    }
-
-                    MouseArea {
-                        id: bellMouseArea
-                        anchors.fill: parent; hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onContainsMouseChanged: bellCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
-                        onPositionChanged: mouse => {
-                            bellCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
-                            bellCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
-                        }
-                        onClicked: {
-                            var center = mapToGlobal(width / 2, 0)
-                            var barBottom = barBg.mapToGlobal(0, barBg.height)
-                            notifPopup.open(center.x - notifPopup.width / 2, barBottom.y + 6)
                         }
                     }
                 }

@@ -227,8 +227,9 @@ Window {
         }
     }
 
-    PopupCard {
+    PanelBackground {
         anchors.fill: parent
+        showBorder: false
 
         Item {
             id: ethTitleBar
