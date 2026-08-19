@@ -190,6 +190,119 @@ Variants {
             return "󰁺"
         }
 
+        property real cpuPercent: 0
+        property var cpuCorePercents: []
+        property real ramPercent: 0
+        property real ramUsedGb: 0
+        property real ramTotalGb: 0
+        property real cpuTempC: -1
+        property string uptimeText: ""
+
+        property real gpuPercent: -1
+        property real gpuTempC: -1
+        property real gpuVramUsedGb: 0
+        property real gpuVramTotalGb: 0
+        property real gpuVramPercent: 0
+
+        property var prevCpuTotals: ({})
+
+        function refreshPerf() {
+            perfProc.running = false
+            perfProc.running = true
+        }
+
+        Timer {
+            interval: 2000
+            running: true
+            repeat: true
+            triggeredOnStart: true
+            onTriggered: panel.refreshPerf()
+        }
+
+        Process {
+            id: perfProc
+            command: ["bash", "-c",
+                "grep '^cpu' /proc/stat; echo '---'; cat /proc/meminfo; echo '---'; cat /proc/uptime; echo '---'; sensors -j 2>/dev/null; echo '---'; " +
+                "for d in /sys/class/drm/card*/device; do if grep -q amdgpu \"$d/uevent\" 2>/dev/null; then " +
+                "echo \"$(cat $d/gpu_busy_percent 2>/dev/null)\t$(cat $d/mem_info_vram_used 2>/dev/null)\t$(cat $d/mem_info_vram_total 2>/dev/null)\"; break; fi; done"]
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    var sections = text.split("---\n")
+                    if (sections.length < 5) return
+                    var cpuLines = sections[0].trim().split("\n")
+                    var memText = sections[1]
+                    var uptimeText = sections[2].trim()
+                    var sensorsText = sections[3]
+                    var gpuLine = sections[4].trim()
+
+                    var newTotals = {}
+                    var overallPercent = 0
+                    var corePercents = []
+
+                    for (var i = 0; i < cpuLines.length; i++) {
+                        var parts = cpuLines[i].trim().split(/\s+/)
+                        var label = parts[0]
+                        var nums = parts.slice(1).map(function(n) { return parseInt(n, 10) || 0 })
+                        var idle = nums[3] + nums[4]
+                        var total = nums.reduce(function(a, b) { return a + b }, 0)
+                        newTotals[label] = { idle: idle, total: total }
+
+                        var prev = panel.prevCpuTotals[label]
+                        var pct = 0
+                        if (prev) {
+                            var totalDelta = total - prev.total
+                            var idleDelta = idle - prev.idle
+                            pct = totalDelta > 0 ? Math.max(0, Math.min(100, 100 * (totalDelta - idleDelta) / totalDelta)) : 0
+                        }
+
+                        if (label === "cpu") overallPercent = pct
+                        else corePercents.push(pct)
+                    }
+
+                    panel.prevCpuTotals = newTotals
+                    panel.cpuPercent = overallPercent
+                    panel.cpuCorePercents = corePercents
+
+                    var memTotalMatch = memText.match(/MemTotal:\s+(\d+)/)
+                    var memAvailMatch = memText.match(/MemAvailable:\s+(\d+)/)
+                    if (memTotalMatch && memAvailMatch) {
+                        var totalKb = parseInt(memTotalMatch[1], 10)
+                        var availKb = parseInt(memAvailMatch[1], 10)
+                        var usedKb = totalKb - availKb
+                        panel.ramTotalGb = totalKb / 1048576
+                        panel.ramUsedGb = usedKb / 1048576
+                        panel.ramPercent = totalKb > 0 ? (usedKb / totalKb) * 100 : 0
+                    }
+
+                    var upSeconds = parseFloat(uptimeText.split(" ")[0]) || 0
+                    var days = Math.floor(upSeconds / 86400)
+                    var hours = Math.floor((upSeconds % 86400) / 3600)
+                    var mins = Math.floor((upSeconds % 3600) / 60)
+                    panel.uptimeText = (days > 0 ? days + "d " : "") + hours + "h " + mins + "m"
+
+                    try {
+                        var sensorsData = JSON.parse(sensorsText)
+                        var k10 = sensorsData["k10temp-pci-00c3"]
+                        if (k10 && k10.Tctl) panel.cpuTempC = k10.Tctl.temp1_input
+                        var amdgpu = sensorsData["amdgpu-pci-2d00"]
+                        if (amdgpu && amdgpu.edge) panel.gpuTempC = amdgpu.edge.temp1_input
+                    } catch (e) {}
+
+                    var gpuParts = gpuLine.split("\t")
+                    if (gpuParts.length === 3 && gpuParts[0] !== "") {
+                        panel.gpuPercent = parseInt(gpuParts[0], 10) || 0
+                        var vramUsed = parseInt(gpuParts[1], 10) || 0
+                        var vramTotal = parseInt(gpuParts[2], 10) || 0
+                        panel.gpuVramUsedGb = vramUsed / 1073741824
+                        panel.gpuVramTotalGb = vramTotal / 1073741824
+                        panel.gpuVramPercent = vramTotal > 0 ? (vramUsed / vramTotal) * 100 : 0
+                    } else {
+                        panel.gpuPercent = -1
+                    }
+                }
+            }
+        }
+
         property bool powerProfilesAvailable: false
         property string powerProfile: ""
         property var powerProfilesList: []
@@ -491,6 +604,22 @@ Variants {
             areaName: panel.weatherAreaName
             forecast: panel.weatherForecast
             glyphFn: panel.weatherGlyph
+        }
+
+        PerformancePopup {
+            id: performancePopup
+            cpuPercent: panel.cpuPercent
+            cpuCorePercents: panel.cpuCorePercents
+            cpuTempC: panel.cpuTempC
+            ramPercent: panel.ramPercent
+            ramUsedGb: panel.ramUsedGb
+            ramTotalGb: panel.ramTotalGb
+            uptimeText: panel.uptimeText
+            gpuPercent: panel.gpuPercent
+            gpuTempC: panel.gpuTempC
+            gpuVramPercent: panel.gpuVramPercent
+            gpuVramUsedGb: panel.gpuVramUsedGb
+            gpuVramTotalGb: panel.gpuVramTotalGb
         }
 
         AudioOSD {
@@ -896,6 +1025,120 @@ Variants {
                                 dateText.text = Qt.formatDateTime(now, "ddd dd MMM")
                             }
                         }
+                    }
+                }
+            }
+
+            Item {
+                id: perfItem
+                anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 110 }
+                visible: !panel.isNarrow
+                width: visible ? perfRow.width + 24 : 0
+                height: 34
+
+                Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+
+                Canvas {
+                    id: perfCanvas
+                    anchors.fill: parent
+                    property real hoverProgress: 0.0
+                    property real mx: 0.5
+                    property real my: 0.5
+                    Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                    Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                    Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                    onHoverProgressChanged: requestPaint()
+                    onMxChanged: requestPaint()
+                    onMyChanged: requestPaint()
+                    onWidthChanged: requestPaint()
+                    onHeightChanged: requestPaint()
+                    onPaint: DivaPaint.paintFacetPill(perfCanvas, hoverProgress, 6)
+                }
+
+                Row {
+                    id: perfRow
+                    anchors.centerIn: parent
+                    spacing: 8
+
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 4
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "󰻠"
+                            color: panel.cpuPercent >= 85 ? "#ff6b6b" : (perfMouseArea.containsMouse ? "#ffffff" : "#999999")
+                            font.pixelSize: 13
+                            Behavior on color { ColorAnimation { duration: 130 } }
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: Math.round(panel.cpuPercent) + "%"
+                            color: perfMouseArea.containsMouse ? "#ffffff" : "#999999"
+                            font.pixelSize: 12; font.family: "monospace"
+                            Behavior on color { ColorAnimation { duration: 130 } }
+                        }
+                    }
+
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 4
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "󰍛"
+                            color: panel.ramPercent >= 90 ? "#ff6b6b" : (perfMouseArea.containsMouse ? "#ffffff" : "#999999")
+                            font.pixelSize: 13
+                            Behavior on color { ColorAnimation { duration: 130 } }
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: Math.round(panel.ramPercent) + "%"
+                            color: perfMouseArea.containsMouse ? "#ffffff" : "#999999"
+                            font.pixelSize: 12; font.family: "monospace"
+                            Behavior on color { ColorAnimation { duration: 130 } }
+                        }
+                    }
+
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 4
+                        visible: panel.gpuPercent >= 0
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "󰢮"
+                            color: panel.gpuPercent >= 85 ? "#ff6b6b" : (perfMouseArea.containsMouse ? "#ffffff" : "#999999")
+                            font.pixelSize: 13
+                            Behavior on color { ColorAnimation { duration: 130 } }
+                        }
+
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: Math.round(panel.gpuPercent) + "%"
+                            color: perfMouseArea.containsMouse ? "#ffffff" : "#999999"
+                            font.pixelSize: 12; font.family: "monospace"
+                            Behavior on color { ColorAnimation { duration: 130 } }
+                        }
+                    }
+                }
+
+                MouseArea {
+                    id: perfMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onContainsMouseChanged: perfCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                    onPositionChanged: mouse => {
+                        perfCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                        perfCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                    }
+                    onClicked: {
+                        var center = mapToGlobal(width / 2, 0)
+                        var barBottom = barBg.mapToGlobal(0, barBg.height)
+                        performancePopup.open(center.x - performancePopup.width / 2, barBottom.y + 6)
                     }
                 }
             }
@@ -1390,5 +1633,6 @@ Variants {
                 }
             }
         }
+
     }
 }
