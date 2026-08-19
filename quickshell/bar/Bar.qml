@@ -818,37 +818,53 @@ Variants {
                     }
                 }
 
-                Column {
+                Item {
+                    id: clockPill
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 0
+                    width: clockColumn.width + 24
+                    height: 34
 
-                    Text {
-                        id: clockText
-                        anchors.right: parent.right
-                        color: "#d0d0d0"
-                        font.pixelSize: 14
-                        font.family: "monospace"
-                        text: Qt.formatDateTime(new Date(), "hh:mm:ss")
+                    Canvas {
+                        id: clockPillCanvas
+                        anchors.fill: parent
+                        onWidthChanged: requestPaint()
+                        onHeightChanged: requestPaint()
+                        onPaint: DivaPaint.paintFacetPill(clockPillCanvas, 0.0, 8)
                     }
 
-                    Text {
-                        id: dateText
-                        visible: !panel.isNarrow
-                        anchors.right: parent.right
-                        color: "#777777"
-                        font.pixelSize: 10
-                        font.family: "monospace"
-                        text: Qt.formatDateTime(new Date(), "ddd dd MMM")
-                    }
+                    Column {
+                        id: clockColumn
+                        anchors.centerIn: parent
+                        spacing: 0
 
-                    Timer {
-                        interval: 1000
-                        running: true
-                        repeat: true
-                        onTriggered: {
-                            var now = new Date()
-                            clockText.text = Qt.formatDateTime(now, "hh:mm:ss")
-                            dateText.text = Qt.formatDateTime(now, "ddd dd MMM")
+                        Text {
+                            id: clockText
+                            anchors.right: parent.right
+                            color: "#d0d0d0"
+                            font.pixelSize: 14
+                            font.family: "monospace"
+                            text: Qt.formatDateTime(new Date(), "hh:mm:ss")
+                        }
+
+                        Text {
+                            id: dateText
+                            visible: !panel.isNarrow
+                            anchors.right: parent.right
+                            color: "#777777"
+                            font.pixelSize: 10
+                            font.family: "monospace"
+                            text: Qt.formatDateTime(new Date(), "ddd dd MMM")
+                        }
+
+                        Timer {
+                            interval: 1000
+                            running: true
+                            repeat: true
+                            onTriggered: {
+                                var now = new Date()
+                                clockText.text = Qt.formatDateTime(now, "hh:mm:ss")
+                                dateText.text = Qt.formatDateTime(now, "ddd dd MMM")
+                            }
                         }
                     }
                 }
