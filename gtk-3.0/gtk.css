@@ -1,0 +1,42 @@
+@define-color accent_bg_color #39c5bb;
+@define-color accent_fg_color #0c1414;
+@define-color accent_color #39c5bb;
+
+@define-color window_bg_color #181818;
+@define-color window_fg_color #e0e0e0;
+
+@define-color view_bg_color #1c1c1c;
+@define-color view_fg_color #e0e0e0;
+
+@define-color headerbar_bg_color #232323;
+@define-color headerbar_fg_color #e0e0e0;
+@define-color headerbar_border_color #5a5a5a;
+@define-color headerbar_backdrop_color @window_bg_color;
+@define-color headerbar_shade_color rgba(0, 0, 0, 0.36);
+@define-color headerbar_darker_shade_color rgba(0, 0, 0, 0.9);
+
+@define-color sidebar_bg_color #202020;
+@define-color sidebar_fg_color #e0e0e0;
+@define-color sidebar_backdrop_color #1c1c1c;
+@define-color sidebar_shade_color rgba(0, 0, 0, 0.25);
+@define-color sidebar_border_color rgba(0, 0, 0, 0.36);
+
+@define-color card_bg_color rgba(255, 255, 255, 0.05);
+@define-color card_fg_color #e0e0e0;
+@define-color card_shade_color rgba(0, 0, 0, 0.36);
+
+@define-color dialog_bg_color #242424;
+@define-color dialog_fg_color #e0e0e0;
+
+@define-color popover_bg_color #242424;
+@define-color popover_fg_color #e0e0e0;
+@define-color popover_shade_color rgba(0, 0, 0, 0.25);
+
+@define-color thumbnail_bg_color #2a2a2a;
+@define-color thumbnail_fg_color #e0e0e0;
+
+@define-color shade_color rgba(0, 0, 0, 0.25);
+@define-color scrollbar_outline_color rgba(0, 0, 0, 0.95);
+
+@define-color success_bg_color #39c5bb;
+@define-color success_color #39c5bb;
