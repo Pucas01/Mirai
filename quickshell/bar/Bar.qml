@@ -475,6 +475,10 @@ Variants {
             id: networkPopup
         }
 
+        CalendarPopup {
+            id: calendarPopup
+        }
+
         WeatherPopup {
             id: weatherPopup
             glyph: panel.weatherGlyph(panel.weatherCode)
@@ -827,9 +831,35 @@ Variants {
                     Canvas {
                         id: clockPillCanvas
                         anchors.fill: parent
+                        property real hoverProgress: 0.0
+                        property real mx: 0.5
+                        property real my: 0.5
+                        Behavior on hoverProgress { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                        Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                        Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                        onHoverProgressChanged: requestPaint()
+                        onMxChanged: requestPaint()
+                        onMyChanged: requestPaint()
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
-                        onPaint: DivaPaint.paintFacetPill(clockPillCanvas, 0.0, 8)
+                        onPaint: DivaPaint.paintFacetPill(clockPillCanvas, hoverProgress, 8)
+                    }
+
+                    MouseArea {
+                        id: clockMouseArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onContainsMouseChanged: clockPillCanvas.hoverProgress = containsMouse ? 1.0 : 0.0
+                        onPositionChanged: mouse => {
+                            clockPillCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                            clockPillCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                        }
+                        onClicked: {
+                            var center = mapToGlobal(width / 2, 0)
+                            var barBottom = barBg.mapToGlobal(0, barBg.height)
+                            calendarPopup.open(center.x - calendarPopup.width / 2, barBottom.y + 6)
+                        }
                     }
 
                     Column {
