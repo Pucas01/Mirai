@@ -73,3 +73,10 @@ hl.window_rule({
     match = { title = "github" },
     float = true,
 })
+
+hl.window_rule({
+    name  = "stayfocused-resolve-popups",
+    match = { class = ".*[Rr]esolve.*", float = true },
+
+    stay_focused = true,
+})
