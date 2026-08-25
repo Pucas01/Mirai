@@ -1477,18 +1477,32 @@ Variants {
 
                         property var toplevels: modelData.toplevels.values
                         property bool occupied: toplevels.length > 0
-                        property var activeToplevel: toplevels.find(t => t.activated) || toplevels[0] || null
-                        property string appId: {
-                            if (!activeToplevel) return ""
-                            if (activeToplevel.wayland && activeToplevel.wayland.appId !== "")
-                                return activeToplevel.wayland.appId
-                            if (activeToplevel.lastIpcObject)
-                                return activeToplevel.lastIpcObject["class"] || ""
+
+                        function toplevelAppId(t) {
+                            if (t.wayland && t.wayland.appId !== "") return t.wayland.appId
+                            if (t.lastIpcObject) return t.lastIpcObject["class"] || ""
                             return ""
                         }
-                        property var appEntry: appId !== "" ? DesktopEntries.heuristicLookup(appId) : null
 
-                        width: occupied ? 38 : (modelData.active ? 28 : 14)
+                        property var appIcons: {
+                            var counts = ({})
+                            var order = []
+                            for (var i = 0; i < toplevels.length; i++) {
+                                var id = toplevelAppId(toplevels[i])
+                                if (id === "") continue
+                                if (counts[id] === undefined) { counts[id] = 0; order.push(id) }
+                                counts[id]++
+                            }
+                            var icons = []
+                            for (var j = 0; j < order.length; j++) {
+                                var appId = order[j]
+                                var entry = DesktopEntries.heuristicLookup(appId)
+                                if (entry && entry.icon !== "") icons.push({ icon: entry.icon, count: counts[appId] })
+                            }
+                            return icons
+                        }
+
+                        width: occupied ? Math.max(38, appIconsRow.implicitWidth + 22) : (modelData.active ? 28 : 14)
                         height: 32
 
                         Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
@@ -1527,13 +1541,46 @@ Variants {
                             onPaint: DivaPaint.paintWsPill(pill, activeProgress, hoverProgress, pulse)
                         }
 
-                        IconImage {
+                        Row {
+                            id: appIconsRow
                             anchors.centerIn: parent
-                            width: 20
-                            height: 20
-                            mipmap: true
-                            visible: occupied && appEntry !== null && appEntry.icon !== ""
-                            source: appEntry && appEntry.icon !== "" ? "image://icon/" + appEntry.icon : ""
+                            spacing: 7
+                            visible: occupied && appIcons.length > 0
+
+                            Repeater {
+                                model: appIcons
+                                delegate: Item {
+                                    required property var modelData
+                                    width: 18
+                                    height: 18
+
+                                    IconImage {
+                                        anchors.fill: parent
+                                        mipmap: true
+                                        source: "image://icon/" + modelData.icon
+                                    }
+
+                                    Rectangle {
+                                        visible: modelData.count > 1
+                                        width: countLabel.implicitWidth + 6
+                                        height: 11
+                                        radius: 5.5
+                                        color: "#1a1a1a"
+                                        border.color: "#484848"
+                                        border.width: 1
+                                        anchors { right: parent.right; bottom: parent.bottom; rightMargin: -4; bottomMargin: -4 }
+
+                                        Text {
+                                            id: countLabel
+                                            anchors.centerIn: parent
+                                            text: modelData.count
+                                            color: "#e0e0e0"
+                                            font.pixelSize: 8
+                                            font.family: "monospace"
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         Rectangle {
