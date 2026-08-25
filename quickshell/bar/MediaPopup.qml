@@ -431,6 +431,8 @@ Window {
                     anchors { left: parent.left; right: parent.right; top: controlsRow.bottom; topMargin: 12; leftMargin: 14; rightMargin: 14 }
                     height: 24
 
+                    property bool open: false
+
                     Canvas {
                         id: playerCycleCanvas
                         anchors.fill: parent
@@ -445,24 +447,26 @@ Window {
                         onMyChanged: requestPaint()
                         onWidthChanged: requestPaint()
                         onHeightChanged: requestPaint()
-                        onPaint: DivaPaint.paintFacetPill(playerCycleCanvas, hoverProgress, 5)
+                        onPaint: DivaPaint.paintFacetPill(playerCycleCanvas, playerSwitcher.open ? 1.0 : hoverProgress, 5)
                     }
+
+                    onOpenChanged: playerCycleCanvas.requestPaint()
 
                     Row {
                         anchors.centerIn: parent
                         spacing: 6
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "⇄"
-                            color: playerCycleArea.containsMouse ? "#ffffff" : "#888888"
-                            font.pixelSize: 11
+                            text: mediaPopup.displayPlayer ? mediaPopup.displayPlayer.identity : ""
+                            color: playerCycleArea.containsMouse ? "#dddddd" : "#666666"
+                            font.pixelSize: 10; font.family: "monospace"
                             Behavior on color { ColorAnimation { duration: 130 } }
                         }
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: mediaPopup.displayPlayer ? mediaPopup.displayPlayer.identity : ""
-                            color: playerCycleArea.containsMouse ? "#dddddd" : "#666666"
-                            font.pixelSize: 10; font.family: "monospace"
+                            text: playerSwitcher.open ? "▲" : "▼"
+                            color: playerCycleArea.containsMouse ? "#ffffff" : "#888888"
+                            font.pixelSize: 8
                             Behavior on color { ColorAnimation { duration: 130 } }
                         }
                     }
@@ -476,12 +480,87 @@ Window {
                             playerCycleCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
                             playerCycleCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
                         }
-                        onClicked: {
-                            var players = Mpris.players.values
-                            if (players.length < 2) return
-                            var idx = players.indexOf(mediaPopup.activePlayer)
-                            var next = players[(idx + 1) % players.length]
-                            mediaPopup.preferredPlayer = next
+                        onClicked: playerSwitcher.open = !playerSwitcher.open
+                    }
+
+                    Item {
+                        id: playerListWrap
+                        anchors { bottom: parent.top; left: parent.left; right: parent.right; bottomMargin: 4 }
+                        height: playerSwitcher.open ? Math.min(96, playerListView.contentHeight + 12) : 0
+                        clip: true
+                        z: 100
+                        Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+
+                        Canvas {
+                            id: playerListCanvas
+                            anchors.fill: parent
+                            opacity: playerSwitcher.open ? 1.0 : 0.0
+                            Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                            onWidthChanged: requestPaint()
+                            onHeightChanged: requestPaint()
+                            onPaint: {
+                                var ctx = getContext("2d")
+                                var w = width, h = height, cut = 10
+                                ctx.clearRect(0, 0, w, h)
+                                if (w <= 0 || h <= 0) return
+
+                                function drawShape() {
+                                    ctx.beginPath()
+                                    ctx.moveTo(cut, 0); ctx.lineTo(w, 0)
+                                    ctx.lineTo(w, h); ctx.lineTo(0, h)
+                                    ctx.lineTo(0, cut); ctx.closePath()
+                                }
+
+                                drawShape()
+                                var base = ctx.createLinearGradient(0, 0, 0, h)
+                                base.addColorStop(0, "#242424"); base.addColorStop(1.0, "#1a1a1a")
+                                ctx.fillStyle = base; ctx.fill()
+
+                                drawShape()
+                                ctx.strokeStyle = "#39c5bb"
+                                ctx.lineWidth = 1
+                                ctx.stroke()
+                            }
+                        }
+
+                        ListView {
+                            id: playerListView
+                            anchors { fill: parent; margins: 6 }
+                            clip: true
+                            model: Mpris.players.values
+
+                            delegate: Item {
+                                id: playerItem
+                                required property var modelData
+                                width: playerListView.width
+                                height: 24
+
+                                readonly property bool isActive: mediaPopup.displayPlayer === playerItem.modelData
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: playerItem.isActive ? "#2a2a2a" : (playerItemArea.containsMouse ? "#242424" : "transparent")
+                                }
+
+                                Text {
+                                    anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; leftMargin: 8; rightMargin: 8 }
+                                    text: playerItem.modelData.identity
+                                    color: playerItem.isActive ? "#8ff5f0" : (playerItemArea.containsMouse ? "#ffffff" : "#cccccc")
+                                    font.pixelSize: 10; font.family: "monospace"
+                                    elide: Text.ElideRight
+                                }
+
+                                MouseArea {
+                                    id: playerItemArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        mediaPopup.preferredPlayer = playerItem.modelData
+                                        playerSwitcher.open = false
+                                    }
+                                }
+                            }
                         }
                     }
                 }

@@ -12,4 +12,5 @@ ShellRoot {
     KeybindsPopup {}
     Kanade {}
     GitHub {}
+    WallpaperSwitcher {}
 }

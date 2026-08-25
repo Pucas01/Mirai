@@ -75,6 +75,14 @@ hl.window_rule({
 })
 
 hl.window_rule({
+    name  = "float-qs-wallpaper-switcher",
+    match = { title = "qs-wallpaper-switcher" },
+    float = true,
+    stay_focused = true,
+    pin = true,
+})
+
+hl.window_rule({
     name  = "stayfocused-resolve-popups",
     match = { class = ".*[Rr]esolve.*", float = true },
 

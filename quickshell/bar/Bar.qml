@@ -29,10 +29,48 @@ Variants {
         property bool isNarrow: panel.width < 1500
         property bool isVeryNarrow: panel.width < 1250
         property var preferredPlayer: null
+        property string preferredPlayerIdentity: ""
+        readonly property string preferredPlayerStatePath: Quickshell.env("HOME") + "/.cache/qs-preferred-player"
         property var activePlayer: {
             var players = Mpris.players.values
             if (preferredPlayer && players.indexOf(preferredPlayer) !== -1) return preferredPlayer
             return players.find(p => p.isPlaying) ?? (players.length > 0 ? players[0] : null)
+        }
+
+        function setPreferredPlayer(player) {
+            panel.preferredPlayer = player
+            panel.preferredPlayerIdentity = player ? player.identity : ""
+            savePreferredPlayerProc.command = ["bash", "-c", "mkdir -p ~/.cache && printf '%s' \"" + panel.preferredPlayerIdentity + "\" > \"" + panel.preferredPlayerStatePath + "\""]
+            savePreferredPlayerProc.running = false
+            savePreferredPlayerProc.running = true
+        }
+
+        function resolvePreferredPlayer() {
+            if (panel.preferredPlayerIdentity === "") return
+            var players = Mpris.players.values
+            var match = players.find(p => p.identity === panel.preferredPlayerIdentity)
+            if (match) panel.preferredPlayer = match
+        }
+
+        Component.onCompleted: loadPreferredPlayerProc.running = true
+
+        Process {
+            id: loadPreferredPlayerProc
+            command: ["cat", panel.preferredPlayerStatePath]
+            running: false
+            stdout: StdioCollector {
+                onStreamFinished: {
+                    panel.preferredPlayerIdentity = text.trim()
+                    panel.resolvePreferredPlayer()
+                }
+            }
+        }
+
+        Process { id: savePreferredPlayerProc; command: []; running: false }
+
+        Connections {
+            target: Mpris.players
+            function onValuesChanged() { panel.resolvePreferredPlayer() }
         }
 
         NotificationServer {
@@ -543,7 +581,7 @@ Variants {
             activePlayer: panel.activePlayer
             preferredPlayer: panel.preferredPlayer
             cavaBars: panel.cavaBars
-            onPreferredPlayerChanged: panel.preferredPlayer = mediaPopup.preferredPlayer
+            onPreferredPlayerChanged: panel.setPreferredPlayer(mediaPopup.preferredPlayer)
         }
 
         ToastWin {

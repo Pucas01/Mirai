@@ -31,6 +31,21 @@ Item {
     }
 
     Process {
+        id: saveWallpaperProc
+        command: []
+        running: false
+    }
+
+    function applyWallpaper(path) {
+        settingsWin.appliedWallpaper = path
+        wallpaperProc.running = false
+        wallpaperProc.running = true
+        saveWallpaperProc.command = ["bash", "-c", "mkdir -p ~/.cache && printf '%s' \"" + path + "\" > \"" + settingsWin.wallpaperStatePath + "\""]
+        saveWallpaperProc.running = false
+        saveWallpaperProc.running = true
+    }
+
+    Process {
         id: ensureWallpaperDirProc
         command: ["mkdir", "-p", settingsWin.wallpaperDir]
         running: false
@@ -172,11 +187,7 @@ Item {
                             wpTileCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
                             wpTileCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
                         }
-                        onClicked: {
-                            settingsWin.appliedWallpaper = model.filePath
-                            wallpaperProc.running = false
-                            wallpaperProc.running = true
-                        }
+                        onClicked: wallpaperSection.applyWallpaper(model.filePath)
                     }
                 }
             }

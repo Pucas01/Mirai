@@ -34,7 +34,16 @@ Window {
         execute: function() { githubToggleProc.running = false; githubToggleProc.running = true }
     })
 
-    readonly property var customEntries: [launcherWin.kanadeEntry, launcherWin.githubEntry]
+    readonly property var wallpaperEntry: ({
+        id: "wallpaper",
+        name: "Wallpaper",
+        genericName: "switch your wallpaper",
+        icon: "preferences-desktop-wallpaper",
+        isCustom: true,
+        execute: function() { wallpaperToggleProc.running = false; wallpaperToggleProc.running = true }
+    })
+
+    readonly property var customEntries: [launcherWin.kanadeEntry, launcherWin.githubEntry, launcherWin.wallpaperEntry]
 
     property var allApps: []
     property bool appsLoaded: false
@@ -50,7 +59,7 @@ Window {
     }
 
     readonly property bool commandMode: searchText.startsWith(">")
-    readonly property string commandQuery: commandMode ? searchText.slice(1).trimStart() : ""
+    readonly property string commandQuery: commandMode ? searchText.slice(1).replace(/^\s+/, "") : ""
 
     function fuzzyScore(text, query) {
         if (query === "") return 0
@@ -84,12 +93,15 @@ Window {
     }
 
     property var filteredApps: {
-        if (commandMode) {
-            if (commandQuery === "") return customEntries.slice()
+        var cmdMode = launcherWin.searchText.startsWith(">")
+        var cmdQuery = cmdMode ? launcherWin.searchText.slice(1).replace(/^\s+/, "") : ""
+
+        if (cmdMode) {
+            if (cmdQuery === "") return customEntries.slice()
             var rankedCmd = []
             for (var c = 0; c < customEntries.length; c++) {
                 var centry = customEntries[c]
-                var cScore = launcherWin.fuzzyScore(centry.name, commandQuery)
+                var cScore = launcherWin.fuzzyScore(centry.name, cmdQuery)
                 if (cScore < 0) continue
                 rankedCmd.push({ app: centry, score: cScore })
             }
@@ -136,6 +148,12 @@ Window {
         launcherWin.raise()
         launcherWin.requestActivate()
         launcherSearch.forceActiveFocus()
+    }
+
+    function openCommandMode() {
+        launcherWin.openLauncher()
+        launcherSearch.text = ">"
+        launcherSearch.cursorPosition = launcherSearch.text.length
     }
 
     function closeLauncher() {
@@ -192,11 +210,18 @@ Window {
         running: false
     }
 
+    Process {
+        id: wallpaperToggleProc
+        command: ["quickshell", "ipc", "call", "wallpaper", "toggle"]
+        running: false
+    }
+
     IpcHandler {
         target: "launcher"
         function toggle(): void { launcherWin.toggleLauncher() }
         function show(): void { launcherWin.openLauncher() }
         function hide(): void { launcherWin.closeLauncher() }
+        function commands(): void { launcherWin.openCommandMode() }
     }
 
     PanelBackground {
