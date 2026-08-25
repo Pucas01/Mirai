@@ -617,6 +617,7 @@ Window {
                                     clearAllCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
                                 }
                                 onClicked: {
+                                    controlCenter.closePopup()
                                     try {
                                         var notifs = controlCenter.trackedNotifications.values
                                         for (var i = notifs.length - 1; i >= 0; i--) notifs[i].dismiss()
@@ -640,7 +641,8 @@ Window {
 
                     ListView {
                         id: notifListView
-                        width: parent.width
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: parent.width - 24
                         height: parent.height - 37
                         clip: true
                         visible: controlCenter.notifCount > 0
