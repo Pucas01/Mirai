@@ -3,6 +3,7 @@ package.path = package.path .. ";./?.lua;./?/init.lua"
 require("workspaces")
 require("env")
 require("appearance")
+require("layout")
 require("input")
 require("keybinds")
 require("windowrules")

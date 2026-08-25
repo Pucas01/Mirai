@@ -49,7 +49,46 @@ Item {
         ensureLogoDirProc.running = true
     }
 
-    Component.onCompleted: loadLogoProc.running = true
+    property string layoutLuaPath: settingsWin.homeDir + "/.config/hypr/layout.lua"
+    property string tilingLayout: "dwindle"
+
+    function setTilingLayout(name) {
+        customizationSection.tilingLayout = name
+        applyLayoutProc.command = ["hyprctl", "eval", "hl.config({general = {layout = '" + name + "'}})"]
+        applyLayoutProc.running = false
+        applyLayoutProc.running = true
+        saveLayoutProc.command = ["bash", "-c", "cat > \"" + customizationSection.layoutLuaPath + "\" <<'LAYOUT_LUA_EOF'\n" + customizationSection.buildLayoutLua() + "\nLAYOUT_LUA_EOF\n"]
+        saveLayoutProc.running = false
+        saveLayoutProc.running = true
+    }
+
+    function buildLayoutLua() {
+        return "-- Managed by qs-settings (customization page). Edits here may be overwritten.\n\n" +
+            "hl.config({\n" +
+            "    general = {\n" +
+            "        layout = \"" + customizationSection.tilingLayout + "\",\n" +
+            "    },\n" +
+            "})\n"
+    }
+
+    Process { id: applyLayoutProc; command: []; running: false }
+    Process { id: saveLayoutProc; command: []; running: false }
+
+    Component.onCompleted: { loadLogoProc.running = true; loadLayoutProc.running = true }
+
+    Process {
+        id: loadLayoutProc
+        command: ["hyprctl", "getoption", "-j", "general:layout"]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    var parsed = JSON.parse(text)
+                    if (parsed.str === "dwindle" || parsed.str === "master") customizationSection.tilingLayout = parsed.str
+                } catch (_) {}
+            }
+        }
+    }
 
     Process {
         id: loadLogoProc
@@ -108,6 +147,79 @@ Item {
             leftPadding: 16
             rightPadding: 16
             bottomPadding: 16
+
+            component LayoutBtn: Item {
+                property string label: ""
+                property bool active: false
+                signal clicked()
+                width: 84; height: 26
+                onActiveChanged: layoutBtnCanvas.requestPaint()
+
+                Canvas {
+                    id: layoutBtnCanvas
+                    anchors.fill: parent
+                    property real hp: 0.0
+                    property real mx: 0.5
+                    property real my: 0.5
+                    Behavior on hp { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                    Behavior on mx { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                    Behavior on my { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
+                    onHpChanged: requestPaint()
+                    onMxChanged: requestPaint()
+                    onMyChanged: requestPaint()
+                    onWidthChanged: requestPaint()
+                    onHeightChanged: requestPaint()
+                    onPaint: DivaPaint.paintFacetPill(layoutBtnCanvas, parent.active ? 1.0 : Math.max(hp, 0), 5)
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: parent.label
+                    color: layoutBtnArea.containsMouse || parent.active ? "#ffffff" : "#999999"
+                    font.pixelSize: 10; font.family: "monospace"
+                    Behavior on color { ColorAnimation { duration: 100 } }
+                }
+
+                MouseArea {
+                    id: layoutBtnArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onContainsMouseChanged: layoutBtnCanvas.hp = containsMouse ? 1.0 : 0.0
+                    onPositionChanged: mouse => {
+                        layoutBtnCanvas.mx = Math.max(0, Math.min(1, mouse.x / width))
+                        layoutBtnCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
+                    }
+                    onClicked: parent.clicked()
+                }
+            }
+
+            SectionCard {
+                title: "layout behaviour"
+                status: customizationSection.tilingLayout
+
+                Item {
+                    width: parent.width
+                    height: 50
+
+                    Row {
+                        anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 12 }
+                        spacing: 8
+
+                        LayoutBtn {
+                            label: "dwindle"
+                            active: customizationSection.tilingLayout === "dwindle"
+                            onClicked: customizationSection.setTilingLayout("dwindle")
+                        }
+
+                        LayoutBtn {
+                            label: "master"
+                            active: customizationSection.tilingLayout === "master"
+                            onClicked: customizationSection.setTilingLayout("master")
+                        }
+                    }
+                }
+            }
 
             FolderListModel {
                 id: pfpModel
