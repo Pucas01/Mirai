@@ -86,8 +86,8 @@ Window {
     Process { id: kanadeToggleProc; command: ["quickshell", "ipc", "call", "kanade", "toggle"] }
     Process { id: githubToggleProc; command: ["quickshell", "ipc", "call", "github", "toggle"] }
     Process { id: logoutProc; command: ["bash", "-c", "hyprctl dispatch exit"] }
-    Process { id: rebootProc; command: ["systemctl", "reboot"] }
-    Process { id: shutdownProc; command: ["systemctl", "poweroff"] }
+    Process { id: rebootProc; command: ["bash", "-c", "command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown --post-cmd \"systemctl reboot\" || systemctl reboot"] }
+    Process { id: shutdownProc; command: ["bash", "-c", "command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown --post-cmd \"systemctl poweroff\" || systemctl poweroff"] }
     Process {
         id: userProc
         command: ["id", "-un"]
