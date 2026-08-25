@@ -399,12 +399,17 @@ Window {
         return Math.floor(diffMonth / 12) + "y ago"
     }
 
-    Component.onCompleted: {
-        refreshAll()
-        loadReposProc.running = true
-    }
+    property bool initialized: false
 
-    onVisibleChanged: if (visible) refreshAll()
+    onVisibleChanged: {
+        if (visible) {
+            if (!githubWin.initialized) {
+                githubWin.initialized = true
+                loadReposProc.running = true
+            }
+            refreshAll()
+        }
+    }
 
     Timer {
         interval: 120000

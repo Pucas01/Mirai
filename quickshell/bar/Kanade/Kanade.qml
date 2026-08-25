@@ -237,16 +237,17 @@ Window {
         syncProc.running = true
     }
 
-    Component.onCompleted: {
-        loadRootsProc.running = true
-        loadTranslationsProc.running = true
-        loadTranslateAllProc.running = true
-        loadDefaultDeviceProc.running = true
-        kanadeWin.refreshDevices()
-    }
+    property bool initialized: false
 
     onVisibleChanged: {
         if (visible) {
+            if (!kanadeWin.initialized) {
+                kanadeWin.initialized = true
+                loadRootsProc.running = true
+                loadTranslationsProc.running = true
+                loadTranslateAllProc.running = true
+                loadDefaultDeviceProc.running = true
+            }
             kanadeWin.refreshDevices()
         }
     }

@@ -31,13 +31,18 @@ Window {
         icon: "xsi-github-symbolic",
         execute: function() { githubToggleProc.running = false; githubToggleProc.running = true }
     })
-    property var allApps: {
+    property var allApps: []
+    property bool appsLoaded: false
+
+    function loadApps() {
+        if (startMenuWin.appsLoaded) return
+        startMenuWin.appsLoaded = true
         try {
-            return DesktopEntries.applications.values
+            startMenuWin.allApps = DesktopEntries.applications.values
                 .filter(e => e && !e.noDisplay && e.name !== "")
                 .concat([startMenuWin.kanadeEntry, startMenuWin.githubEntry])
                 .sort((a, b) => a.name.localeCompare(b.name))
-        } catch(_) { return [] }
+        } catch(_) { startMenuWin.allApps = [] }
     }
     property var filteredApps: searchText === ""
         ? allApps
@@ -53,6 +58,7 @@ Window {
     visible: false
 
     function open(x, y) {
+        startMenuWin.loadApps()
         startMenuWin.x = x
         startMenuWin.y = y
         isOpen = false

@@ -36,12 +36,17 @@ Window {
 
     readonly property var customEntries: [launcherWin.kanadeEntry, launcherWin.githubEntry]
 
-    property var allApps: {
+    property var allApps: []
+    property bool appsLoaded: false
+
+    function loadApps() {
+        if (launcherWin.appsLoaded) return
+        launcherWin.appsLoaded = true
         try {
-            return DesktopEntries.applications.values
+            launcherWin.allApps = DesktopEntries.applications.values
                 .filter(e => e && !e.noDisplay && e.name !== "")
                 .sort((a, b) => a.name.localeCompare(b.name))
-        } catch (_) { return [] }
+        } catch (_) { launcherWin.allApps = [] }
     }
 
     readonly property bool commandMode: searchText.startsWith(">")
@@ -126,6 +131,7 @@ Window {
     }
 
     function openLauncher() {
+        launcherWin.loadApps()
         visible = true
         launcherWin.raise()
         launcherWin.requestActivate()
