@@ -817,6 +817,13 @@ Variants {
                                     quickSettingsCanvas.my = Math.max(0, Math.min(1, mouse.y / height))
                                 }
                                 onClicked: quickSettingsItem.openTab("audio", qsAudioArea)
+                                onWheel: wheel => {
+                                    if (!Pipewire.defaultAudioSink || !Pipewire.defaultAudioSink.audio) return
+                                    var audio = Pipewire.defaultAudioSink.audio
+                                    var step = wheel.angleDelta.y > 0 ? 0.05 : -0.05
+                                    audio.volume = Math.max(0, Math.min(1, audio.volume + step))
+                                    panel.showAudioOsd()
+                                }
                             }
                         }
 
