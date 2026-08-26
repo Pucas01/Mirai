@@ -5,34 +5,41 @@ import "./DivaPaint.js" as DivaPaint
 
 Window {
     id: toastWin
+    property var notif: null
+    property int stackIndex: 0
+    property real anchorX: 0
+    property real anchorY: 0
     property bool isOpen: false
-    property var currentNotif: null
-    property var pendingNotif: null
+    property bool closing: false
+
+    signal dismissed()
+
     flags: Qt.ToolTip | Qt.FramelessWindowHint | Qt.NoDropShadowWindowHint
     color: "transparent"
     width: 320
     height: 78
-    visible: false
 
-    onPendingNotifChanged: {
-        if (!pendingNotif) return
-        currentNotif = pendingNotif
-        toastSwipeItem.swipeX = 0
-    }
+    property int stackGap: 8
+    property real stackY: anchorY + stackIndex * (height + stackGap)
+    Behavior on stackY { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
-    function show(x, y, notif) {
-        pendingNotif = notif
-        toastWin.x = x
-        toastWin.y = y
-        isOpen = false
-        visible = true
-        toastOpenTimer.start()
-        toastAutoClose.restart()
+    x: anchorX - width - 16
+    y: stackY
+    visible: true
+
+    Component.onCompleted: toastOpenTimer.start()
+
+    function requestClose() {
+        if (toastWin.closing) return
+        toastWin.closing = true
+        toastWin.isOpen = false
+        toastAutoClose.stop()
+        toastHideTimer.start()
     }
 
     Timer { id: toastOpenTimer; interval: 10; onTriggered: toastWin.isOpen = true }
-    Timer { id: toastAutoClose; interval: 4000; onTriggered: { toastWin.isOpen = false; toastHideTimer.start() } }
-    Timer { id: toastHideTimer; interval: 220; onTriggered: toastWin.visible = false }
+    Timer { id: toastAutoClose; interval: 4000; running: true; onTriggered: toastWin.requestClose() }
+    Timer { id: toastHideTimer; interval: 220; onTriggered: toastWin.dismissed() }
 
     Item {
         id: toastAnimItem
@@ -74,19 +81,19 @@ Window {
                 IconImage {
                     width: 24; height: 24
                     anchors.verticalCenter: parent.verticalCenter
-                    source: toastWin.currentNotif && toastWin.currentNotif.appIcon !== "" ? "image://icon/" + toastWin.currentNotif.appIcon : ""
+                    source: toastWin.notif && toastWin.notif.appIcon !== "" ? "image://icon/" + toastWin.notif.appIcon : ""
                     mipmap: true
-                    visible: toastWin.currentNotif && toastWin.currentNotif.appIcon !== ""
+                    visible: toastWin.notif && toastWin.notif.appIcon !== ""
                 }
 
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width - (toastWin.currentNotif && toastWin.currentNotif.appIcon !== "" ? 34 : 0)
+                    width: parent.width - (toastWin.notif && toastWin.notif.appIcon !== "" ? 34 : 0)
                     spacing: 4
 
                     Text {
                         width: parent.width
-                        text: toastWin.currentNotif ? toastWin.currentNotif.summary : ""
+                        text: toastWin.notif ? toastWin.notif.summary : ""
                         color: "#e0e0e0"
                         font.pixelSize: 13; font.family: "monospace"
                         elide: Text.ElideRight
@@ -94,11 +101,11 @@ Window {
 
                     Text {
                         width: parent.width
-                        text: toastWin.currentNotif ? toastWin.currentNotif.body : ""
+                        text: toastWin.notif ? toastWin.notif.body : ""
                         color: "#777777"
                         font.pixelSize: 11; font.family: "monospace"
                         elide: Text.ElideRight
-                        visible: toastWin.currentNotif && toastWin.currentNotif.body !== ""
+                        visible: toastWin.notif && toastWin.notif.body !== ""
                     }
                 }
             }
@@ -118,7 +125,7 @@ Window {
                     Behavior on color { ColorAnimation { duration: 100 } }
                 }
 
-                onClicked: { toastWin.isOpen = false; toastHideTimer.start() }
+                onClicked: toastWin.requestClose()
             }
         }
 
@@ -130,9 +137,8 @@ Window {
             onActiveChanged: {
                 if (!active) {
                     if (toastSwipeItem.swipeX > 80) {
-                        if (toastWin.currentNotif) toastWin.currentNotif.dismiss()
-                        toastWin.isOpen = false
-                        toastHideTimer.start()
+                        if (toastWin.notif) toastWin.notif.dismiss()
+                        toastWin.requestClose()
                     } else {
                         toastSnapBackAnim.start()
                     }

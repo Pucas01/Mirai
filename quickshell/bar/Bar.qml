@@ -14,7 +14,8 @@ Variants {
     id: shellRoot
     model: Quickshell.screens
 
-    property var pendingToastNotif: null
+    property var toastQueue: []
+    property int nextToastId: 0
     property int globalNotifCount: 0
     property string pendingScreenshotPath: ""
     property int screenshotTrigger: 0
@@ -84,8 +85,15 @@ Variants {
                 }
                 notif.tracked = true
                 shellRoot.globalNotifCount += 1
-                shellRoot.pendingToastNotif = notif
+                if (panel.hyprMonitor && panel.hyprMonitor.focused) {
+                    var toastId = shellRoot.nextToastId++
+                    shellRoot.toastQueue = shellRoot.toastQueue.concat([{ id: toastId, notif: notif, panel: panel }])
+                }
             }
+        }
+
+        function dequeueToast(toastId) {
+            shellRoot.toastQueue = shellRoot.toastQueue.filter(e => e.id !== toastId)
         }
 
         Connections {
@@ -107,12 +115,6 @@ Variants {
                     shellRoot.pendingScreenshotPath,
                     shellRoot.screenshotTrigger
                 )
-            }
-            function onPendingToastNotifChanged() {
-                if (!shellRoot.pendingToastNotif) return
-                if (!panel.hyprMonitor || !panel.hyprMonitor.focused) return
-                var pos = barBg.mapToGlobal(barBg.width - toastWin.width - 16, barBg.height + 8)
-                toastWin.show(pos.x, pos.y, shellRoot.pendingToastNotif)
             }
         }
 
@@ -584,8 +586,24 @@ Variants {
             onPreferredPlayerChanged: panel.setPreferredPlayer(mediaPopup.preferredPlayer)
         }
 
-        ToastWin {
-            id: toastWin
+        property var ownToasts: shellRoot.toastQueue.filter(entry => entry.panel === panel)
+
+        Variants {
+            model: panel.ownToasts
+
+            ToastWin {
+                required property var modelData
+                notif: modelData.notif
+                stackIndex: {
+                    for (var i = 0; i < panel.ownToasts.length; i++) {
+                        if (panel.ownToasts[i].id === modelData.id) return i
+                    }
+                    return 0
+                }
+                anchorX: barBg.mapToGlobal(barBg.width, 0).x
+                anchorY: barBg.mapToGlobal(0, barBg.height).y + 8
+                onDismissed: panel.dequeueToast(modelData.id)
+            }
         }
 
         ScreenshotWin {
@@ -1325,7 +1343,7 @@ Variants {
             }
 
             Row {
-                anchors { right: wsArea.left; top: parent.top; bottom: parent.bottom }
+                anchors { right: wsArea.left; rightMargin: 17; top: parent.top; bottom: parent.bottom }
                 spacing: 0
                 visible: panel.activePlayer !== null
 
