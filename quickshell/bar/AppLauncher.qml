@@ -53,7 +53,7 @@ Window {
         launcherWin.appsLoaded = true
         try {
             launcherWin.allApps = DesktopEntries.applications.values
-                .filter(e => e && !e.noDisplay && e.name !== "")
+                .filter(e => e && !e.noDisplay && e.name)
                 .sort((a, b) => a.name.localeCompare(b.name))
         } catch (_) { launcherWin.allApps = [] }
     }
@@ -63,6 +63,7 @@ Window {
 
     function fuzzyScore(text, query) {
         if (query === "") return 0
+        if (!text) return -1
         text = text.toLowerCase()
         query = query.toLowerCase()
         var ti = 0, qi = 0, consecutive = 0, score = 0, firstMatch = -1
