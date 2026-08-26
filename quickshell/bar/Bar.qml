@@ -1515,6 +1515,14 @@ Variants {
 
                         property var toplevels: modelData.toplevels.values
                         property bool occupied: toplevels.length > 0
+                        property int refreshTick: 0
+
+                        Timer {
+                            interval: 500
+                            running: true
+                            repeat: false
+                            onTriggered: refreshTick++
+                        }
 
                         function toplevelAppId(t) {
                             if (t.wayland && t.wayland.appId !== "") return t.wayland.appId
@@ -1523,6 +1531,7 @@ Variants {
                         }
 
                         property var appIcons: {
+                            refreshTick
                             var counts = ({})
                             var order = []
                             for (var i = 0; i < toplevels.length; i++) {
