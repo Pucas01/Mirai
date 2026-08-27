@@ -1100,7 +1100,7 @@ Variants {
             Item {
                 id: perfItem
                 anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 110 }
-                visible: !panel.isNarrow
+                visible: startMenu.showPerf
                 width: visible ? perfRow.width + 24 : 0
                 height: 34
 
@@ -1214,7 +1214,7 @@ Variants {
             Item {
                 id: weatherItem
                 anchors { left: wsArea.right; verticalCenter: parent.verticalCenter; leftMargin: 10 }
-                visible: panel.weatherLoaded && !panel.isNarrow
+                visible: startMenu.showWeather && panel.weatherLoaded
                 width: visible ? weatherRow.width + 24 : 0
                 height: 34
 

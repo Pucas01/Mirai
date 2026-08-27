@@ -45,6 +45,46 @@ Window {
         saveStartIconProc.running = true
     }
 
+    property bool showPerf: true
+    property bool showWeather: true
+    property string showPerfStatePath: settingsWin.homeDir + "/.cache/qs-show-perf"
+    property string showWeatherStatePath: settingsWin.homeDir + "/.cache/qs-show-weather"
+
+    function setShowPerf(v) {
+        settingsWin.showPerf = v
+        saveShowPerfProc.command = ["bash", "-c", "mkdir -p ~/.cache && printf '%s' \"" + (v ? "1" : "0") + "\" > \"" + settingsWin.showPerfStatePath + "\""]
+        saveShowPerfProc.running = false
+        saveShowPerfProc.running = true
+    }
+
+    function setShowWeather(v) {
+        settingsWin.showWeather = v
+        saveShowWeatherProc.command = ["bash", "-c", "mkdir -p ~/.cache && printf '%s' \"" + (v ? "1" : "0") + "\" > \"" + settingsWin.showWeatherStatePath + "\""]
+        saveShowWeatherProc.running = false
+        saveShowWeatherProc.running = true
+    }
+
+    Process {
+        id: loadShowPerfProc
+        command: ["cat", settingsWin.showPerfStatePath]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: { settingsWin.showPerf = text.trim() !== "0" }
+        }
+    }
+
+    Process {
+        id: loadShowWeatherProc
+        command: ["cat", settingsWin.showWeatherStatePath]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: { settingsWin.showWeather = text.trim() !== "0" }
+        }
+    }
+
+    Process { id: saveShowPerfProc; command: ["true"]; running: false }
+    Process { id: saveShowWeatherProc; command: ["true"]; running: false }
+
     property string cursorTheme: "default"
     property int cursorSize: 24
     readonly property string cursorAppliedTheme: cursorTheme
@@ -153,7 +193,7 @@ Window {
 
     onSectionChanged: if (section === "monitors") refreshMonitors()
 
-    Component.onCompleted: { loadPfpProc.running = true; loadStartIconProc.running = true; loadCursorProc.running = true; loadWallpaperProc.running = true }
+    Component.onCompleted: { loadPfpProc.running = true; loadStartIconProc.running = true; loadCursorProc.running = true; loadWallpaperProc.running = true; loadShowPerfProc.running = true; loadShowWeatherProc.running = true }
 
     readonly property string repoDir: Quickshell.shellPath("..")
     property bool updateAvailable: false

@@ -194,6 +194,79 @@ Item {
                 }
             }
 
+            component CsToggle: Item {
+                property bool checked: false
+                signal toggled()
+                width: 40; height: 22
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: height / 2
+                    color: parent.checked ? "#39c5bb" : "#2a2a2a"
+                    border.color: parent.checked ? "#39c5bb" : "#3a3a3a"
+                    border.width: 1
+                    Behavior on color { ColorAnimation { duration: 130 } }
+                }
+
+                Rectangle {
+                    width: 16; height: 16; radius: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: parent.checked ? parent.width - width - 3 : 3
+                    color: "#ffffff"
+                    Behavior on x { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: parent.toggled()
+                }
+            }
+
+            SectionCard {
+                title: "bar widgets"
+
+                Item {
+                    width: parent.width
+                    height: 44
+
+                    Text {
+                        anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 12; right: showPerfToggle.left; rightMargin: 10 }
+                        text: "show performance"
+                        color: "#999999"
+                        font.pixelSize: 11; font.family: "monospace"
+                        elide: Text.ElideRight
+                    }
+
+                    CsToggle {
+                        id: showPerfToggle
+                        anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 12 }
+                        checked: settingsWin.showPerf
+                        onToggled: settingsWin.setShowPerf(!settingsWin.showPerf)
+                    }
+                }
+
+                Item {
+                    width: parent.width
+                    height: 44
+
+                    Text {
+                        anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 12; right: showWeatherToggle.left; rightMargin: 10 }
+                        text: "show weather"
+                        color: "#999999"
+                        font.pixelSize: 11; font.family: "monospace"
+                        elide: Text.ElideRight
+                    }
+
+                    CsToggle {
+                        id: showWeatherToggle
+                        anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 12 }
+                        checked: settingsWin.showWeather
+                        onToggled: settingsWin.setShowWeather(!settingsWin.showWeather)
+                    }
+                }
+            }
+
             SectionCard {
                 title: "layout behaviour"
                 status: customizationSection.tilingLayout

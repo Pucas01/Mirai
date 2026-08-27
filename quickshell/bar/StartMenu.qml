@@ -12,6 +12,8 @@ Window {
     property alias startIconPath: settingsWin.startIconPath
     readonly property string defaultStartIcon: settingsWin.defaultStartIcon
     property alias audioSliderActive: settingsWin.audioSliderActive
+    property alias showPerf: settingsWin.showPerf
+    property alias showWeather: settingsWin.showWeather
 
     function openSettings(section) {
         if (section) settingsWin.section = section
