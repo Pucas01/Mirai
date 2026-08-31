@@ -933,10 +933,4 @@ Window {
         }
     }
 
-    IpcHandler {
-        target: "github"
-        function toggle(): void { githubWin.visible = !githubWin.visible }
-        function show(): void { githubWin.visible = true }
-        function hide(): void { githubWin.visible = false }
-    }
 }

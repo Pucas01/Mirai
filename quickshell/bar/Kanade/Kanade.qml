@@ -655,11 +655,4 @@ Window {
         }
     }
 
-    IpcHandler {
-        target: "kanade"
-        function toggle(): void { kanadeWin.visible = !kanadeWin.visible }
-        function show(): void { kanadeWin.visible = true }
-        function hide(): void { kanadeWin.visible = false }
-    }
-
 }

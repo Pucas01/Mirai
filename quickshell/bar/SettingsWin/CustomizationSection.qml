@@ -19,12 +19,12 @@ Item {
 
     function refreshPfpModel() {
         pfpModel.folder = ""
-        pfpModel.folder = Qt.binding(function() { return "file://" + settingsWin.pfpDir })
+        pfpModel.folder = Qt.binding(function() { return customizationSection.sectionActive ? ("file://" + settingsWin.pfpDir) : "" })
     }
 
     function refreshStartIconModel() {
         startIconModel.folder = ""
-        startIconModel.folder = Qt.binding(function() { return "file://" + settingsWin.startIconDir })
+        startIconModel.folder = Qt.binding(function() { return customizationSection.sectionActive ? ("file://" + settingsWin.startIconDir) : "" })
     }
 
     property int cursorPreviewGen: 0
@@ -111,7 +111,7 @@ Item {
         running: false
         onExited: {
             logoModel.folder = ""
-            logoModel.folder = Qt.binding(function() { return "file://" + customizationSection.logoDir })
+            logoModel.folder = Qt.binding(function() { return customizationSection.sectionActive ? ("file://" + customizationSection.logoDir) : "" })
         }
     }
 
@@ -296,7 +296,7 @@ Item {
 
             FolderListModel {
                 id: pfpModel
-                folder: "file://" + settingsWin.pfpDir
+                folder: customizationSection.sectionActive ? ("file://" + settingsWin.pfpDir) : ""
                 nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.webp", "*.JPG", "*.PNG", "*.JPEG", "*.WEBP"]
                 showDirs: false
             }
@@ -434,7 +434,7 @@ Item {
 
             FolderListModel {
                 id: startIconModel
-                folder: "file://" + settingsWin.startIconDir
+                folder: customizationSection.sectionActive ? ("file://" + settingsWin.startIconDir) : ""
                 nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.webp", "*.svg", "*.JPG", "*.PNG", "*.JPEG", "*.WEBP", "*.SVG"]
                 showDirs: false
             }
@@ -567,7 +567,7 @@ Item {
 
             FolderListModel {
                 id: logoModel
-                folder: "file://" + customizationSection.logoDir
+                folder: customizationSection.sectionActive ? ("file://" + customizationSection.logoDir) : ""
                 nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.webp", "*.gif", "*.JPG", "*.PNG", "*.JPEG", "*.WEBP", "*.GIF"]
                 showDirs: false
             }

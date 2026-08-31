@@ -67,7 +67,7 @@ Window {
 
     FolderListModel {
         id: wallpaperModel
-        folder: "file://" + switcherWin.wallpaperDir
+        folder: switcherWin.visible ? ("file://" + switcherWin.wallpaperDir) : ""
         nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.webp", "*.JPG", "*.PNG", "*.JPEG", "*.WEBP"]
         showDirs: false
     }
@@ -298,10 +298,4 @@ Window {
         }
     }
 
-    IpcHandler {
-        target: "wallpaper"
-        function toggle(): void { if (switcherWin.visible) switcherWin.closeSwitcher(); else switcherWin.open() }
-        function show(): void { switcherWin.open() }
-        function hide(): void { switcherWin.closeSwitcher() }
-    }
 }
